@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지원하기 — 같이 할 사람</title>
+<meta name="description" content="공모전 팀 지원. 질문에 답을 남기면 읽어보고 연락드립니다.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <a class="masthead__name" href="./index.html">같이 할 사람</a>
+    <a class="masthead__back" href="./index.html">목록으로</a>
+  </header>
+
+  <main>
+    <section class="ctx" id="ctx" hidden>
+      <h1 class="ctx__title" id="ctx-title"></h1>
+      <p class="ctx__meta" id="ctx-meta"></p>
+      <p class="ctx__note" id="ctx-note" hidden></p>
+    </section>
+
+    <p class="notice" id="state">불러오는 중입니다.</p>
+
+    <form id="flow" hidden novalidate autocomplete="on">
+
+      <div id="steps"></div>
+
+      <section class="step" id="step-who" hidden>
+        <p class="step__progress" id="who-progress"></p>
+        <h2 class="step__q" id="who-heading" tabindex="-1">어떻게 연락드리면 될까요?</h2>
+        <p class="step__help">답변을 읽고 연락드리기 위해서만 씁니다. 다른 지원자에게 공개되지 않습니다.</p>
+
+        <div class="field">
+          <label class="field__label" for="f-name">이름</label>
+          <input class="field__input" id="f-name" name="name" type="text" maxlength="60"
+                 autocomplete="name" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-contact">연락처
+            <span class="field__hint">카카오톡 아이디, 이메일, 전화번호 중 편한 것</span>
+          </label>
+          <input class="field__input" id="f-contact" name="contact" type="text" maxlength="120"
+                 autocomplete="email" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-affil">학교와 학과
+            <span class="field__hint">선택 사항</span>
+          </label>
+          <input class="field__input" id="f-affil" name="affiliation" type="text" maxlength="120"
+                 autocomplete="organization">
+        </div>
+
+        <p class="notice notice--bad" id="submit-error" hidden></p>
+
+        <div class="step__nav">
+          <button class="btn btn--quiet" type="button" id="who-prev">이전</button>
+          <button class="btn" type="submit" id="submit">제출하기</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-done" hidden>
+        <h2 class="done__title" id="done-heading" tabindex="-1">답변을 받았습니다.</h2>
+        <p class="hero__lede">
+          읽어보고 연락드리겠습니다. 이야기를 나눈 뒤에 함께할지 정합니다.
+          이 창은 닫으셔도 됩니다.
+        </p>
+        <div class="step__nav">
+          <a class="btn btn--quiet" href="./index.html">다른 공모전 보기</a>
+        </div>
+      </section>
+
+    </form>
+  </main>
+
+  <footer class="foot">
+    <p>
+      남겨주신 이름과 연락처, 답변은 팀원을 정하는 데에만 씁니다.
+      다른 지원자에게 공개되지 않습니다.
+    </p>
+    <p><a href="https://euichanlee0608-svg.github.io/">전체 포트폴리오 보기</a></p>
+  </footer>
+
+</div>
+
+<script src="./js/config.js"></script>
+<script src="./js/api.js"></script>
+<script src="./js/apply.js"></script>
+
+<!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
+<script>
+(function(){
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6J7xGChz7atOL6sVnbiWui8Z1lXVjeF8WUGTj3MXNgEn7EioTz8xZXb522vkAxkgeXA/exec';
+  var SITE = 'contest_team';
+  try {
+    if (location.search.indexOf('owner=1') !== -1) {
+      localStorage.setItem('__is_owner__', '1');            /* 내 방문은 이후 영구 제외 */
+    } else if (localStorage.getItem('__is_owner__') !== '1'
+               && location.protocol !== 'file:'             /* 로컬 헤드리스 테스트 차단 */
+               && location.hostname !== 'localhost'
+               && location.hostname !== '127.0.0.1') {
+      var img = new Image();
+      img.src = WEBAPP_URL
+        + '?t=pv&s=' + encodeURIComponent(SITE)
+        + '&p=' + encodeURIComponent(location.pathname + location.hash)
+        + '&r=' + encodeURIComponent(document.referrer || 'direct')
+        + '&v=' + encodeURIComponent(vid());
+    }
+  } catch (e) {}
+
+  function vid(){
+    try {
+      var k = '__vid__', v = localStorage.getItem(k);
+      if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return ''; }
+  }
+})();
+
+/* 액션 알림 — 새 지원이 들어오면 즉시 폰으로. 개인정보는 절대 싣지 않는다(공모전 제목만). */
+window.notifyAction = function (msg) {
+  try {
+    if (location.protocol === 'file:' ||
+        location.hostname === 'localhost' ||
+        location.hostname === '127.0.0.1') return;
+    if (localStorage.getItem('__is_owner__') === '1') return;
+    var img = new Image();
+    img.src = 'https://script.google.com/macros/s/AKfycby6J7xGChz7atOL6sVnbiWui8Z1lXVjeF8WUGTj3MXNgEn7EioTz8xZXb522vkAxkgeXA/exec'
+            + '?t=act&s=' + encodeURIComponent('contest_team')
+            + '&m=' + encodeURIComponent(msg);
+  } catch (e) {}
+};
+</script>
+
+</body>
+</html>

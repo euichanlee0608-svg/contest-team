@@ -1,0 +1,471 @@
+/* ─────────────────────────────────────────────────────────────
+   공모전 팀 모집 — 스타일 단일 출처
+
+   설계 원칙 (왜 이렇게 생겼나)
+   1. 질문이 주인공이다. 화면에서 가장 큰 글자는 언제나 질문이다.
+      이 제품의 차별점이 '이상한 질문'이므로 그것을 숨기지 않는다.
+   2. 한 화면에 하나만 묻는다. 폰에서 서술형 3개를 한꺼번에 보여주면 사람은 닫는다.
+   3. 색 신호는 마감뿐이다. --signal 은 마감이 임박한 공고에만 쓰고 다른 어디에도 쓰지 않는다.
+      그래서 빨간 것이 보이면 그것은 항상 '시간이 없다'는 뜻이다.
+   4. 장식용 상자를 쓰지 않는다. 위계는 여백과 괘선(1px)으로 만든다.
+      그림자·둥근 카드·그라데이션 없음.
+   5. 쓰던 글은 잃지 않는다(이건 JS 쪽 규칙이지만 UI 가 그것을 눈에 보이게 한다).
+   ───────────────────────────────────────────────────────────── */
+
+/* ── 토큰 ── 밝은 테마가 기준. 어두운 테마는 값만 다시 정의한다. ── */
+:root {
+  color-scheme: light dark;
+
+  --paper:      #FAF9F6;   /* 종이 */
+  --paper-sunk: #F0EDE6;   /* 답안지처럼 눌린 면 (입력칸) */
+  --ink:        #17212C;   /* 본문 */
+  --ink-soft:   #5C6873;   /* 보조 설명 */
+  --ink-faint:  #8B959E;   /* 글자수 같은 주변 정보 */
+  --rule:       #DED9CF;   /* 괘선 */
+  --signal:     #C1272D;   /* 마감 임박 — 오직 이 용도 */
+  --ring:       #17212C;   /* 키보드 포커스 */
+
+  --f-serif: "Gowun Batang", Batang, "바탕", serif;
+  --f-sans:  "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  --t-xs:  0.8125rem;  /* 13 */
+  --t-s:   0.9375rem;  /* 15 */
+  --t-b:   1.0625rem;  /* 17 — 본문 */
+  --t-m:   1.3125rem;  /* 21 */
+  --t-l:   1.6875rem;  /* 27 — 지원 화면의 질문 */
+  --t-xl:  2.125rem;   /* 34 */
+  --t-xxl: 2.6875rem;  /* 43 — 첫 화면의 질문 */
+
+  --s-1: 0.5rem;
+  --s-2: 0.75rem;
+  --s-3: 1rem;
+  --s-4: 1.5rem;
+  --s-5: 2rem;
+  --s-6: 3rem;
+  --s-7: 4.5rem;
+
+  --page:    44rem;   /* 본문 기둥 */
+  --measure: 33rem;   /* 읽기 좋은 한 줄 길이(한글 기준 약 38자) */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #14181C;
+    --paper-sunk: #1B2127;
+    --ink:        #E9E7E1;
+    --ink-soft:   #A2AAB2;
+    --ink-faint:  #717A82;
+    --rule:       #2C3239;
+    --signal:     #E8736A;
+    --ring:       #E9E7E1;
+  }
+}
+:root[data-theme="dark"] {
+  --paper:      #14181C;
+  --paper-sunk: #1B2127;
+  --ink:        #E9E7E1;
+  --ink-soft:   #A2AAB2;
+  --ink-faint:  #717A82;
+  --rule:       #2C3239;
+  --signal:     #E8736A;
+  --ring:       #E9E7E1;
+}
+
+/* ── 바탕 ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 100%; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: var(--t-b);
+  line-height: 1.65;
+  /* 한글은 단어 중간에서 끊기면 읽기 나쁘다. 다만 긴 URL 은 넘치지 않게 풀어준다. */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 기둥 ── */
+.page {
+  width: 100%;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--s-4);
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: var(--s-6) 0;
+}
+
+/* ── 머리말: 사이트 이름과 되돌아가기만. 장식 없음 ── */
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4) 0 var(--s-3);
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+}
+.masthead__name {
+  font-family: var(--f-serif);
+  font-size: var(--t-b);
+  color: var(--ink);
+  text-decoration: none;
+}
+.masthead__back {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1px;
+}
+.masthead__back:hover { color: var(--ink); border-bottom-color: currentColor; }
+
+/* ── 첫 화면: 질문 자체가 헤드라인이다 ── */
+.hero { padding: var(--s-6) 0 var(--s-5); }
+
+.hero__q {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-size: var(--t-xl);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s-4);
+  max-width: 20ch;          /* 질문은 짧은 행으로 끊어야 무게가 산다 */
+  text-wrap: balance;
+}
+
+.hero__lede {
+  font-size: var(--t-b);
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0 0 var(--s-4);
+}
+
+.hero__jump {
+  display: inline-block;
+  font-size: var(--t-s);
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 2px;
+}
+
+/* ── 구역 제목 ── */
+.section { padding: var(--s-5) 0; }
+
+.section__title {
+  font-family: var(--f-sans);
+  font-size: var(--t-s);
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin: 0 0 var(--s-4);
+}
+
+/* ── 공모전 목록 ──
+   카드 상자가 아니라 종이 위의 행이다. 왼쪽 D-n 은 장식이 아니라
+   이 목록에서 유일하게 중요한 수치라서 고정폭 기둥을 차지한다. ── */
+.contests { list-style: none; margin: 0; padding: 0; }
+
+.contest {
+  display: grid;
+  grid-template-columns: 4.75rem 1fr;
+  gap: 0 var(--s-3);
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+}
+.contest:last-child { border-bottom: 1px solid var(--rule); }
+
+.contest__due {
+  font-size: var(--t-s);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  padding-top: 0.2em;
+  white-space: nowrap;
+}
+.contest__due[data-urgent="1"] { color: var(--signal); }
+
+.contest__body { min-width: 0; }
+
+.contest__title {
+  font-family: var(--f-serif);
+  font-size: var(--t-m);
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 0 0 var(--s-1);
+}
+
+/* 주최·자격은 가운뎃점으로 잇지 않고 공백 기둥으로 벌린다 */
+.contest__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 1.75em;
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  margin: 0 0 var(--s-2);
+}
+
+.contest__summary {
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  margin: 0 0 var(--s-3);
+  max-width: var(--measure);
+}
+
+.contest__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.contest__source {
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1px;
+}
+.contest__source:hover { color: var(--ink); border-bottom-color: currentColor; }
+
+/* ── 단추 ── 채워진 것 하나, 비어 있는 것 하나. 그 이상 만들지 않는다 ── */
+.btn {
+  font-family: var(--f-sans);
+  font-size: var(--t-s);
+  font-weight: 500;
+  line-height: 1;
+  padding: 0.85em 1.5em;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+  transition: opacity 0.12s ease;
+}
+.btn:hover { opacity: 0.82; }
+.btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+.btn--quiet {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.btn--quiet:hover { border-color: var(--ink); opacity: 1; }
+
+/* ── 진행 안내(실제 순서라서 번호를 쓴다) ── */
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  max-width: var(--measure);
+}
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+}
+.steps li::before {
+  content: counter(step);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ── 빈 상태 / 오류 ── 비난하지 않고 다음 할 일을 말한다 ── */
+.notice {
+  border-left: 2px solid var(--rule);
+  padding: var(--s-2) 0 var(--s-2) var(--s-3);
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  max-width: var(--measure);
+}
+.notice--bad { border-left-color: var(--signal); color: var(--ink); }
+
+/* ── 지원 화면: 공모전 머리말 ── */
+.ctx { padding: var(--s-5) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
+.ctx__title {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-size: var(--t-m);
+  line-height: 1.5;
+  margin: 0 0 var(--s-1);
+}
+.ctx__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 1.75em;
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  margin: 0;
+}
+.ctx__meta [data-urgent="1"] { color: var(--signal); font-weight: 700; }
+.ctx__note {
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  margin: var(--s-3) 0 0;
+  max-width: var(--measure);
+}
+
+/* ── 한 화면에 질문 하나 ── */
+.step { padding: var(--s-6) 0 var(--s-5); }
+
+.step__progress {
+  font-size: var(--t-s);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  margin: 0 0 var(--s-4);
+}
+
+.step__q {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-size: var(--t-l);
+  line-height: 1.55;
+  margin: 0 0 var(--s-2);
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.step__help {
+  font-size: var(--t-s);
+  color: var(--ink-soft);
+  margin: 0 0 var(--s-4);
+  max-width: var(--measure);
+}
+
+/* 답안지. 눌린 면 + 넉넉한 안쪽 여백으로 '여기에 길게 쓰는 곳'임을 형태로 말한다. */
+.sheet {
+  display: block;
+  width: 100%;
+  min-height: 15rem;
+  resize: vertical;
+  background: var(--paper-sunk);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: var(--s-4);
+  font-family: var(--f-serif);
+  font-size: 1rem;          /* iOS 확대 방지를 위해 16px 미만으로 내리지 않는다 */
+  line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.sheet:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sheet::placeholder { color: var(--ink-faint); }
+
+.sheet-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--s-2);
+  min-height: 1.5em;
+}
+.sheet-foot__count[data-over="1"] { color: var(--signal); }
+
+.step__nav {
+  display: flex;
+  gap: var(--s-3);
+  align-items: center;
+  margin-top: var(--s-5);
+}
+.step__nav .btn { min-width: 7rem; text-align: center; }
+
+/* ── 신원 입력 ── */
+.field { margin: 0 0 var(--s-4); max-width: var(--measure); }
+.field__label {
+  display: block;
+  font-size: var(--t-s);
+  font-weight: 500;
+  margin: 0 0 var(--s-1);
+}
+.field__hint {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  margin: 0 0 var(--s-2);
+  font-weight: 400;
+}
+.field__input {
+  width: 100%;
+  background: var(--paper-sunk);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.8em 0.9em;
+  font-family: var(--f-sans);
+  font-size: 1rem;          /* iOS 확대 방지 */
+  line-height: 1.5;
+}
+.field__input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ── 제출 완료 ── */
+.done__title {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-size: var(--t-l);
+  line-height: 1.5;
+  margin: 0 0 var(--s-3);
+}
+
+/* ── 꼬리말 ── */
+.foot {
+  border-top: 1px solid var(--rule);
+  margin-top: var(--s-7);
+  padding: var(--s-4) 0 var(--s-6);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+}
+.foot p { margin: 0 0 var(--s-2); max-width: var(--measure); }
+.foot a { color: var(--ink-soft); }
+
+/* ── 폰 ── */
+@media (max-width: 640px) {
+  .page { padding: 0 var(--s-3); }
+  .hero { padding: var(--s-5) 0 var(--s-4); }
+  .hero__q { font-size: var(--t-l); max-width: none; }
+  .step__q { font-size: var(--t-m); max-width: none; }
+  .step { padding: var(--s-5) 0 var(--s-4); }
+
+  /* 좁은 화면에서 D-n 이 가로폭을 먹지 않도록 제목 위로 올린다 */
+  .contest { grid-template-columns: 1fr; gap: var(--s-1) 0; }
+  .contest__due { padding-top: 0; }
+
+  .sheet { padding: var(--s-3); min-height: 13rem; }
+  .step__nav { flex-direction: column-reverse; align-items: stretch; }
+  .step__nav .btn { width: 100%; }
+  .foot { margin-top: var(--s-5); }
+  .rule { margin: var(--s-4) 0; }
+}

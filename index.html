@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>같이 할 사람 — 공모전 팀 모집</title>
+<meta name="description" content="공모전을 하나 고르고 질문에 답을 남기면, 읽어보고 연락드립니다. 스펙 대신 생각을 봅니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="같이 할 사람 — 공모전 팀 모집">
+<meta property="og:description" content="공모전을 하나 고르고 질문에 답을 남기면, 읽어보고 연락드립니다. 스펙 대신 생각을 봅니다.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <a class="masthead__name" href="./index.html">같이 할 사람</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 class="hero__q" id="headline">“북극곰의 멸종을 막으려면 어떻게 해야 할까요?”</h1>
+      <p class="hero__lede">
+        정답이 있는 질문이 아닙니다. 어디서부터 생각을 시작하는지가 궁금해서 묻습니다.
+        공모전을 하나 고르면 이런 질문이 두세 개 나옵니다. 스펙은 묻지 않습니다.
+      </p>
+      <a class="hero__jump" href="#contests">모집 중인 공모전 보기</a>
+    </section>
+
+    <hr class="rule">
+
+    <section class="section" id="contests">
+      <h2 class="section__title">모집 중인 공모전</h2>
+
+      <p class="notice" id="list-state">목록을 불러오는 중입니다.</p>
+      <ol class="contests" id="list" hidden></ol>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">어떻게 진행되나요</h2>
+      <ol class="steps">
+        <li>함께하고 싶은 공모전을 하나 고릅니다.</li>
+        <li>질문에 답을 씁니다. 쓰다 멈춰도 이 브라우저에 저장되니 이어서 쓸 수 있습니다.</li>
+        <li>읽어보고 연락드립니다. 이야기를 나눈 뒤에 함께할지 정합니다.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>
+      남겨주신 이름과 연락처, 답변은 팀원을 정하는 데에만 씁니다.
+      다른 지원자에게 공개되지 않습니다.
+    </p>
+    <p><a href="https://euichanlee0608-svg.github.io/">전체 포트폴리오 보기</a></p>
+  </footer>
+
+</div>
+
+<script src="./js/config.js"></script>
+<script src="./js/api.js"></script>
+<script src="./js/home.js"></script>
+
+<!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
+<script>
+(function(){
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6J7xGChz7atOL6sVnbiWui8Z1lXVjeF8WUGTj3MXNgEn7EioTz8xZXb522vkAxkgeXA/exec';
+  var SITE = 'contest_team';
+  try {
+    if (location.search.indexOf('owner=1') !== -1) {
+      localStorage.setItem('__is_owner__', '1');            /* 내 방문은 이후 영구 제외 */
+    } else if (localStorage.getItem('__is_owner__') !== '1'
+               && location.protocol !== 'file:'             /* 로컬 헤드리스 테스트 차단 */
+               && location.hostname !== 'localhost'
+               && location.hostname !== '127.0.0.1') {
+      var img = new Image();
+      img.src = WEBAPP_URL
+        + '?t=pv&s=' + encodeURIComponent(SITE)
+        + '&p=' + encodeURIComponent(location.pathname + location.hash)
+        + '&r=' + encodeURIComponent(document.referrer || 'direct')
+        + '&v=' + encodeURIComponent(vid());
+    }
+  } catch (e) {}
+
+  function vid(){
+    try {
+      var k = '__vid__', v = localStorage.getItem(k);
+      if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return ''; }
+  }
+})();
+</script>
+
+</body>
+</html>
