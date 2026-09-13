@@ -5,7 +5,7 @@
  *   GET  ?t=feed &key=PUBLIC_KEY                 공모전·문항 읽기(공개 정보만)
  *   POST ?t=apply&key=PUBLIC_KEY                 지원서 쓰기(쓰기 전용, 응답에 남의 데이터 없음)
  *   POST ?t=sync &key=ADMIN_KEY                  공모전 업서트(공모전봇 전용)
- *   GET  ?t=inbox&key=ADMIN_KEY&after=<행번호>   새 지원 요약(텔레그램 알림용)
+ *   GET  ?t=inbox&key=ADMIN_KEY&after=<행번호>   새 지원 전체(텔레그램 알림용 — 신원·질문·답)
  *
  * ── 설치 순서 ────────────────────────────────────────────────────────────
  *  1) 새 구글 시트를 하나 만든다. **방문 통계 시트와 절대 겹치지 않게 전용 시트로 만든다**(SPEC 3장).
@@ -29,7 +29,12 @@
  * ── 이 파일이 지키는 불변식 ──────────────────────────────────────────────
  *  · PUBLIC_KEY 로는 지원 내역을 읽는 경로가 **존재하지 않는다**(t=inbox 는 ADMIN_KEY 전용).
  *  · t=apply 의 응답은 {ok:true} 뿐이다 — 남의 데이터가 섞일 코드 경로를 만들지 않는다.
- *  · 공모전 탭 K·L(모집상태·팀소개)과 지원 탭 N열 이후(채점)는 어떤 경로로도 쓰지 않는다.
+ *  · 공모전 탭 K·L(모집상태·팀소개)과 지원 탭 S열 이후(채점)는 어떤 경로로도 쓰지 않는다.
+ *
+ * ── 2026-09-14 개정 (코드 붙여넣기 → 배포 관리에서 새 버전 → setup() 한 번) ──────
+ *  · 답변 칸 5 → 10 (I~R). 채점 열은 N 이 아니라 **S 부터**다.
+ *  · setup() 이 지원 탭 헤더의 빈 칸을 채우고, 문항 탭이 비어 있으면 기본 질문 3개를 넣는다.
+ *  · t=inbox 가 답변까지 돌려준다(ADMIN_KEY 전용 — 공모전봇이 텔레그램으로 보낸다).
  */
 
 // ── 탭 이름과 헤더 (SPEC 3장과 문자열까지 일치해야 한다) ──────────────────
@@ -41,25 +46,42 @@ var TAB_APPLY = '지원';
 var HEAD_CONTEST = ['contest_id', '제목', '링크', '마감표기', '마감일', '주최',
                     '지원자격', '요약', '출처', '갱신시각', '모집상태', '팀소개'];
 var HEAD_QUESTION = ['qid', 'contest_id', '질문', '도움말', '순서', '최대글자수', '사용'];
-// A~M 만 코드가 쓴다. N열 이후(사고력·협업·메모·결과)는 사람 몫이라 헤더조차 만들지 않는다.
+// A~R 만 코드가 쓴다. S열 이후(사고력·협업·메모·결과)는 사람 몫이라 헤더조차 만들지 않는다.
 var HEAD_APPLY = ['제출시각', 'applicant_id', 'contest_id', '공모전제목', '이름', '연락처', '소속',
-                  '문항ID들', '답변1', '답변2', '답변3', '답변4', '답변5'];
+                  '문항ID들', '답변1', '답변2', '답변3', '답변4', '답변5',
+                  '답변6', '답변7', '답변8', '답변9', '답변10'];
 
 var CONTEST_BOT_COLS = 10;   // A~J. 업서트는 여기까지만 쓴다(K·L 보호).
-var APPLY_COLS = 13;         // A~M. append 는 여기까지만 쓴다(N 이후 보호).
+var APPLY_COLS = 18;         // A~R. append 는 여기까지만 쓴다(S 이후 보호).
 
 // ── SPEC 4장 '서버측 방어' 의 상한 ────────────────────────────────────────
-var MAX_BODY_BYTES = 20 * 1024;  // 한 요청 총 20KB (UTF-8 바이트 기준)
+var MAX_BODY_BYTES = 64 * 1024;  // 한 요청 총 64KB (UTF-8 바이트 기준 — 한글 서술형 3개가 20KB 를 넘는다)
 var MAX_NAME = 200;              // 이름
 var MAX_CONTACT = 200;           // 연락처
 var MAX_ANSWER = 4000;           // 답변 1개
-var MAX_ANSWERS = 5;             // 답변 개수 (지원 탭 I~M 가 5칸)
+var MAX_ANSWERS = 10;            // 답변 개수 (지원 탭 I~R 가 10칸)
+
+// 공통 항목(프론트 js/apply.js 의 PROFILE)의 qid → 텔레그램에 붙일 이름. qid 는 바꾸지 않는 규약이라 어긋나지 않는다.
+var PROFILE_LABELS = { p_role: '역할', p_goal: '목표 수준', p_strength: '강점', p_avail: '시간·회의' };
+
+// 문항 탭이 비어 있을 때 setup() 이 넣는 기본 질문(A~G). 이후 수정은 시트에서 한다 — 코드는 다시 넣지 않는다.
+var DEFAULT_QUESTIONS = [
+  ['c1', '', '가장 공들였는데, 정작 결과에는 별 영향이 없었던 작업이 있었나요?',
+   '지금까지의 프로젝트나 과제에서 시간을 가장 많이 쏟았지만 평가나 사용자 반응은 달라지지 않았던 기능·작업을 하나 떠올려 주세요. ' +
+   '그 뒤로 마감이 빠듯할 때 무엇부터 할지 정하는 나만의 기준이 생겼다면 함께 적어주세요.', 1, 1500, 'Y'],
+  ['c2', '', '이번 프로젝트에서 직접 구현해 보고 싶은 아이디어를, 파이프라인이 보이게 적어주세요.',
+   '‘AI 배차 시스템’처럼 주제만 적기보다 ① 풀고 싶은 병목 ② 쓸 방법(예: 칼만 필터로 센서 노이즈 보정, MILP로 제약 조건 최적화, 경량 모델 파인튜닝) ' +
+   '③ 입력과 최종 출력이 드러나면 좋습니다. 가상의 프로젝트 제목 + 파이프라인 한 줄이면 충분합니다.', 2, 1500, 'Y'],
+  ['c3', '', '발표 첫 장이나 데모 첫 10초 안에 ‘기존보다 낫다’를 보여준다면, 무엇을 내밀겠어요?',
+   '심사위원은 긴 설명을 꼼꼼히 읽을 여유가 없습니다. 위에 적은 프로젝트를 기준으로, 기존 방식과 비교할 수치' +
+   '(예: 지연 시간 X% 단축, 연산 비용 Y% 절감, 특정 엣지 케이스 실패율 Z% 감소)와 그걸 보여줄 화면(비교 차트, 실시간 로그, A/B 대시보드 등)을 적어주세요.', 3, 1500, 'Y']
+];
 // 아래 둘은 SPEC 에 수치가 없다. 시트에 쓰레기가 쌓이는 걸 막는 최소 가드다.
 var MAX_AFFILIATION = 200;
 var MAX_ID = 100;                // applicant_id · qid 같은 식별자
 
 var MAX_SYNC_ITEMS = 500;        // 한 번의 sync 로 받는 공모전 수 상한
-var MAX_INBOX_ITEMS = 200;       // 한 번의 inbox 응답 행 수 상한(초과분은 다음 호출로)
+var MAX_INBOX_ITEMS = 30;        // 한 번의 inbox 응답 행 수 상한(답변까지 실어 크다 — 초과분은 다음 호출로)
 
 var TZ_KST = 'Asia/Seoul';
 var DEFAULT_MAX_CHARS = 2000;    // 문항 F열이 비면 2000 (SPEC 3장)
@@ -129,8 +151,15 @@ function setup() {
   made.push(ensureTab_(ss, TAB_QUESTION, HEAD_QUESTION));
   made.push(ensureTab_(ss, TAB_APPLY, HEAD_APPLY));
 
+  var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY);
+
+  var qsh = tab_(ss, TAB_QUESTION);
+  if (qsh.getLastRow() < 2) {
+    qsh.getRange(2, 1, DEFAULT_QUESTIONS.length, HEAD_QUESTION.length).setValues(DEFAULT_QUESTIONS);
+    made.push('문항 기본 ' + DEFAULT_QUESTIONS.length + '개 채움');
+  }
+
   var props = PropertiesService.getScriptProperties();
-  var warn = [];
   if (!props.getProperty('PUBLIC_KEY')) warn.push('PUBLIC_KEY 미설정');
   if (!props.getProperty('ADMIN_KEY')) warn.push('ADMIN_KEY 미설정');
   if (props.getProperty('PUBLIC_KEY') &&
@@ -249,13 +278,13 @@ function handleApply_(body) {
   // 마감·닫힘 여부로는 거절하지 않는다. 정적 캐시가 낡아 마감 직후에 도착한 진짜 지원을
   // 버리는 손해가, 지난 공모전에 한 행 더 쌓이는 손해보다 크다. 거르는 건 사람이 시트에서 한다.
 
-  var row = [isoKst_(new Date()), applicantId, contestId, title, name, contact, affiliation,
+  var row = [isoKst_(new Date()), applicantId, contestId, title, cell_(name), cell_(contact), cell_(affiliation),
              qids.join(',')];
-  for (var k = 0; k < MAX_ANSWERS; k++) row.push(texts[k] || '');   // I~M 은 항상 5칸을 채운다
+  for (var k = 0; k < MAX_ANSWERS; k++) row.push(cell_(texts[k] || ''));   // I~R 은 항상 10칸을 채운다
 
   withLock_(function () {
     var sh = tab_(ss, TAB_APPLY);
-    // appendRow 를 쓰면 배열 길이만큼만 써서 N열 이후를 건드리지 않는다. 락으로 행 경합도 막는다.
+    // appendRow 를 쓰면 배열 길이만큼만 써서 S열 이후를 건드리지 않는다. 락으로 행 경합도 막는다.
     sh.appendRow(row);
     SpreadsheetApp.flush();
   });
@@ -337,7 +366,7 @@ function handleSync_(body) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// t=inbox — ADMIN_KEY 전용. 텔레그램 알림용 '요약만'. 답변 본문은 담지 않는다.
+// t=inbox — ADMIN_KEY 전용. 공모전봇이 텔레그램으로 보낼 지원 전체(신원·질문·답). 채점 열(S~)은 읽지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 
 function handleInbox_(after) {
@@ -351,18 +380,32 @@ function handleInbox_(after) {
 
   var count = last - from;
   var capped = Math.min(count, MAX_INBOX_ITEMS);
-  // A~E 만 읽는다. 답변(I~M)과 채점(N~)은 애초에 메모리에 올리지 않는다.
-  var values = sh.getRange(from + 1, 1, capped, 5).getValues();
+  // A~R 만 읽는다. 채점(S~)은 애초에 메모리에 올리지 않는다.
+  var values = sh.getRange(from + 1, 1, capped, APPLY_COLS).getValues();
   var tz = ss.getSpreadsheetTimeZone();
+
+  // 질문 본문은 지원 탭에 없다(qid 만 있다). 문항 탭에서 찾아 붙인다 — 지금 시트에 적힌 문구 기준이다.
+  var qtext = {};
+  var qrows = readTab_(ss, TAB_QUESTION, 3);
+  for (var j = 0; j < qrows.length; j++) qtext[s_(qrows[j][0])] = s_(qrows[j][2]);
 
   var items = [];
   for (var i = 0; i < values.length; i++) {
     var v = values[i];
+    var qids = s_(v[7]) ? s_(v[7]).split(',') : [];
+    var answers = [];
+    for (var k = 0; k < qids.length && k < MAX_ANSWERS; k++) {
+      var qid = qids[k].trim();
+      answers.push({ qid: qid, question: PROFILE_LABELS[qid] || qtext[qid] || qid, text: s_(v[8 + k]) });
+    }
     items.push({
       row: from + 1 + i,
       at: at_(v[0], tz),
       contest_title: s_(v[3]),
-      name: s_(v[4])
+      name: s_(v[4]),
+      contact: s_(v[5]),
+      affiliation: s_(v[6]),
+      answers: answers
     });
   }
 
@@ -485,6 +528,28 @@ function ensureTab_(ss, name, headers) {
     note += '+헤더';
   }
   return note;
+}
+
+/**
+ * 헤더 행에서 빈 칸만 채운다(탭이 이미 있을 때 열이 늘어난 경우). 사람이 적어둔 다른 값은 덮지 않고 경고로 돌려준다.
+ */
+function extendHeader_(sh, headers) {
+  var row = sh.getRange(1, 1, 1, headers.length).getValues()[0];
+  var warn = [];
+  for (var i = 0; i < headers.length; i++) {
+    var cur = s_(row[i]);
+    if (!cur) sh.getRange(1, i + 1).setValue(headers[i]);
+    else if (cur !== headers[i]) warn.push(sh.getName() + ' 탭 ' + (i + 1) + '열 헤더가 "' + cur + '" — "' + headers[i] + '" 자리입니다. 채점 열은 S열부터 쓰세요');
+  }
+  return warn;
+}
+
+/**
+ * 공개 폼 입력이 수식으로 해석되지 않게 한다. '=IMPORTXML(...)' 같은 답이 그대로 셀에 들어가면
+ * 시트가 수식을 실행해 다른 지원자 정보를 밖으로 보낼 수 있다. 앞에 ' 를 붙이면 시트는 글자로 보관한다.
+ */
+function cell_(v) {
+  return /^[=+\-@]/.test(v) ? "'" + v : v;
 }
 
 /**

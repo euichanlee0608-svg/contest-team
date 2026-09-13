@@ -13,8 +13,8 @@
 
   var API = window.ContestTeamAPI;
 
-  /* GAS 지원 탭의 답변 칸은 I~M 다섯 개다(SPEC 3장). 공통 항목 4개를 쓰므로 시트 문항은 1개까지. */
-  var MAX_ANSWERS = 5;
+  /* GAS 지원 탭의 답변 칸은 I~R 열 개다(SPEC 3장). 공통 항목 4개를 쓰므로 시트 문항은 6개까지. */
+  var MAX_ANSWERS = 10;
 
   /* 공통 항목. qid 는 시트 [지원] 탭 H열에 그대로 남는다 — 바꾸면 이전 지원과 열 의미가 어긋난다. */
   var PROFILE = [
@@ -32,7 +32,7 @@
     },
     {
       qid: "p_goal", short: "목표 수준",
-      title: "이번 공모전, 어느 정도로 임하고 싶으세요?",
+      title: "이번 프로젝트, 어느 정도로 임하고 싶으세요?",
       help: "정답은 없습니다. 팀 안에서 기대치가 어긋나는 게 가장 힘들어서 미리 여쭙니다.",
       groups: [{ type: "radio", layout: "cards", required: "하나를 골라주세요.", options: [
         { label: "수상권을 노린다", desc: "진심으로 상을 목표로 하고, 그만큼 시간을 씁니다." },
@@ -50,7 +50,7 @@
         { label: "디자인(UI·그래픽)" }, { label: "리서치·자료 조사" }, { label: "일정·협업 관리" },
       ] }],
       extra: { label: "관련 경험을 짧게 적어주세요", hint: "선택 사항", max: 500,
-               placeholder: "예: ○○ 공모전에서 발표 담당, 교내 해커톤에서 백엔드 구현" },
+               placeholder: "예: ○○ 프로젝트에서 발표 담당, 교내 해커톤에서 백엔드 구현" },
     },
     {
       qid: "p_avail", short: "시간·회의",
@@ -142,7 +142,6 @@
   }
 
   function dueLabel(c) {
-    if (c.days_left === null) return "마감 미정";
     if (c.days_left === 0) return "오늘 마감";
     return "D-" + c.days_left;
   }
@@ -315,7 +314,7 @@
     addNav(sec, index, validate);
 
     return {
-      qid: q.qid, short: "질문", node: sec, validate: validate,
+      qid: q.qid, short: "질문 " + (index - PROFILE.length + 1), node: sec, validate: validate,
       value: function () { return ta.value.trim(); },
       dump: function () { return ta.value; },
       restore: function (d) {
@@ -445,7 +444,7 @@
 
   /* ── 시작 ── */
   if (!contestId) {
-    setState("어느 공모전인지 알 수 없습니다. 목록에서 다시 골라주세요.", true);
+    setState("어느 프로젝트인지 알 수 없습니다. 목록에서 다시 골라주세요.", true);
     return;
   }
 
@@ -455,7 +454,7 @@
       var questions = pair[1];
 
       if (!contest) {
-        setState("이미 마감됐거나 모집이 닫힌 공모전입니다. 목록에서 다른 공모전을 골라주세요.", true);
+        setState("이미 마감됐거나 모집이 닫힌 프로젝트입니다. 목록에서 다른 프로젝트를 골라주세요.", true);
         return;
       }
       if (PROFILE.length + questions.length > MAX_ANSWERS) {

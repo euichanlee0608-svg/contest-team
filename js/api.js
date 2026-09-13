@@ -77,7 +77,7 @@
   }
 
   /* 남은 날수. 마감일을 못 읽으면 null 을 돌려주고, 호출자는 그것을 '미정'으로 표시한다.
-     근거가 없을 때 감추지 않는 것이 공모전봇과 같은 규약이다. */
+     목록에서는 null 인 공고를 뺀다(listContests). */
   function daysLeft(deadline) {
     var d = parseDay(deadline);
     if (!d) return null;
@@ -110,12 +110,12 @@
     });
   }
 
-  /* 모집 중인 공모전. 마감일이 지난 것은 빼고, 마감일을 못 읽은 것은 남긴다. */
+  /* 모집 중인 공모전. 마감일이 지났거나 마감일을 모르는 것은 뺀다(2026-09-14 사용자 결정 — '마감 미정'은 목록에 두지 않는다). */
   function listContests() {
     return fetchFeed().then(function (feed) {
       return feed.contests.filter(function (c) {
         var left = daysLeft(c.deadline);
-        return left === null || left >= 0;
+        return left !== null && left >= 0;
       }).map(function (c) {
         var left = daysLeft(c.deadline);
         return {
@@ -132,9 +132,7 @@
           urgent: (left !== null && left <= (CFG.URGENT_DAYS || 7)),
         };
       }).sort(function (a, b) {
-        /* 마감이 임박한 순. 마감 미정은 뒤로 보낸다. */
-        if (a.days_left === null) return 1;
-        if (b.days_left === null) return -1;
+        /* 마감이 임박한 순 */
         return a.days_left - b.days_left;
       });
     });

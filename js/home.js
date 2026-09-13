@@ -17,7 +17,6 @@
   }
 
   function dueLabel(c) {
-    if (c.days_left === null) return "마감 미정";
     if (c.days_left === 0) return "오늘 마감";
     return "D-" + c.days_left;
   }
@@ -70,7 +69,7 @@
 
   API.listContests().then(function (rows) {
     if (!rows.length) {
-      setState("지금은 모집 중인 공모전이 없습니다. 새로 열리면 이 자리에 올라옵니다.", false);
+      setState("지금은 모집 중인 프로젝트가 없습니다. 새로 열리면 이 자리에 올라옵니다.", false);
       return;
     }
     rows.forEach(function (c, i) {
