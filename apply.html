@@ -4,27 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>지원하기 — 같이 할 사람</title>
-<meta name="description" content="공모전 팀 지원. 질문에 답을 남기면 읽어보고 연락드립니다.">
+<meta name="description" content="공모전 팀 지원. 역할·목표·강점·시간을 남기면 읽어보고 연락드립니다.">
 <meta name="robots" content="noindex">
+<script>document.documentElement.className += " js";</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="./css/styles.css">
+<link rel="stylesheet" href="./css/styles.css?v=2">
 </head>
 <body>
 
-<div class="page">
+<header class="nav nav--solid">
+  <div class="wrap nav__inner">
+    <a class="nav__brand" href="./index.html">같이 할 사람</a>
+    <a class="nav__link" href="./index.html#contests">← 목록으로</a>
+  </div>
+</header>
 
-  <header class="masthead">
-    <a class="masthead__name" href="./index.html">같이 할 사람</a>
-    <a class="masthead__back" href="./index.html">목록으로</a>
-  </header>
+<main class="wrap apply">
+  <aside class="apply__side" id="ctx" hidden>
+    <p class="eyebrow">지원하는 공모전</p>
+    <h1 class="ctx__title" id="ctx-title"></h1>
+    <p class="ctx__meta" id="ctx-meta"></p>
+    <p class="ctx__note" id="ctx-note" hidden></p>
+    <div class="progress" aria-hidden="true"><div class="progress__bar" id="progress-bar"></div></div>
+    <ol class="stepper" id="stepper"></ol>
+  </aside>
 
-  <main>
-    <section class="ctx" id="ctx" hidden>
-      <h1 class="ctx__title" id="ctx-title"></h1>
-      <p class="ctx__meta" id="ctx-meta"></p>
-      <p class="ctx__note" id="ctx-note" hidden></p>
-    </section>
-
+  <div class="apply__main">
     <p class="notice" id="state">불러오는 중입니다.</p>
 
     <form id="flow" hidden novalidate autocomplete="on">
@@ -61,38 +66,36 @@
         <p class="notice notice--bad" id="submit-error" hidden></p>
 
         <div class="step__nav">
-          <button class="btn btn--quiet" type="button" id="who-prev">이전</button>
+          <button class="btn btn--ghost" type="button" id="who-prev">이전</button>
           <button class="btn" type="submit" id="submit">제출하기</button>
         </div>
       </section>
 
       <section class="step" id="step-done" hidden>
-        <h2 class="done__title" id="done-heading" tabindex="-1">답변을 받았습니다.</h2>
-        <p class="hero__lede">
+        <h2 class="step__q" id="done-heading" tabindex="-1">지원서를 받았습니다.</h2>
+        <p class="step__help">
           읽어보고 연락드리겠습니다. 이야기를 나눈 뒤에 함께할지 정합니다.
           이 창은 닫으셔도 됩니다.
         </p>
         <div class="step__nav">
-          <a class="btn btn--quiet" href="./index.html">다른 공모전 보기</a>
+          <a class="btn btn--ghost" href="./index.html#contests">다른 공모전 보기</a>
         </div>
       </section>
 
     </form>
-  </main>
+  </div>
+</main>
 
-  <footer class="foot">
-    <p>
-      남겨주신 이름과 연락처, 답변은 팀원을 정하는 데에만 씁니다.
-      다른 지원자에게 공개되지 않습니다.
-    </p>
-    <p><a href="https://euichanlee0608-svg.github.io/">전체 포트폴리오 보기</a></p>
-  </footer>
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <p>남겨주신 이름과 연락처, 답변은 팀원을 정하는 데에만 씁니다. 다른 지원자에게 공개되지 않습니다.</p>
+    <p><a href="https://euichanlee0608-svg.github.io/">전체 포트폴리오 보기 →</a></p>
+  </div>
+</footer>
 
-</div>
-
-<script src="./js/config.js"></script>
-<script src="./js/api.js"></script>
-<script src="./js/apply.js"></script>
+<script src="./js/config.js?v=2"></script>
+<script src="./js/api.js?v=2"></script>
+<script src="./js/apply.js?v=2"></script>
 
 <!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
 <script>

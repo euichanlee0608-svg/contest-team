@@ -36,11 +36,14 @@
 - **네트워크를 타는 코드는 `js/api.js` 하나뿐이다.** 화면 코드(`home.js`·`apply.js`)에서 `fetch` 를
   직접 부르지 않는다 — 2단계(매칭 서비스, Supabase 전환)에서 이 파일만 갈아끼우는 게 이 구조의 전제다.
   핵심 3개(`listContests` · `getQuestions` · `submitApplication`)는 그때 구현이 통째로 바뀌고,
-  보조 5개(`getContest` · `headlineQuestion` · `applicantId` · `daysLeft` · `isConfigured`)는
+  보조 4개(`getContest` · `applicantId` · `daysLeft` · `isConfigured`)는
   그 위에 얹혔거나 로컬 계산이라 그대로 간다. 목록은 `SPEC.md` 5장이 단일 출처다.
 - **설정은 `js/config.js` 에만 둔다.** `api.js` 는 읽기만 한다. 설치할 때 고치는 파일이 하나여야
   README 가 헷갈리지 않는다.
 - `applicant_id` 는 클라이언트에서 UUID 로 만들어 `localStorage` 에 보관하고 매 제출에 포함한다.
+- **공통 항목(역할·목표·강점·시간)은 `apply.js` 의 `PROFILE` 이 출처이고 답변 5칸 중 4칸을 쓴다.**
+  시트 `문항` 탭 활성 문항은 공모전당 1개까지 — 늘리려면 GAS 열 배치부터(SPEC 0장). `qid`(`p_*`)는 바꾸지 않는다.
+- 캐시 버스팅: CSS·JS 를 고치면 HTML 의 `?v=N` 을 올린다(Pages 가 옛 파일을 물고 있는다).
 - 답변은 **qid 별로 쪼개서** 보낸다(한 덩어리 텍스트로 합치지 않는다). 신원(이름·연락처·소속)과
   답변은 **다른 필드**에 둔다 — 나중에 신원만 안 보내는 식으로 익명화하려면 이 분리가 있어야 한다.
 

@@ -1,4 +1,4 @@
-/* 첫 화면 — 질문 헤드라인과 모집 중인 공모전 목록.
+/* 첫 화면 — 랜딩 아래의 모집 중인 공모전 목록.
 
    시트에서 온 문자열은 전부 textContent 로만 넣는다(innerHTML 금지).
    공고 제목·요약은 외부 사이트에서 크롤해 온 값이라 신뢰할 수 없다. */
@@ -8,10 +8,9 @@
   var API = window.ContestTeamAPI;
   var listEl = document.getElementById("list");
   var stateEl = document.getElementById("list-state");
-  var headlineEl = document.getElementById("headline");
+  var countEl = document.getElementById("board-count");
 
   function setState(text, bad) {
-    if (!stateEl) return;
     stateEl.textContent = text;
     stateEl.className = bad ? "notice notice--bad" : "notice";
     stateEl.hidden = false;
@@ -23,6 +22,11 @@
     return "D-" + c.days_left;
   }
 
+  function dateLabel(c) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c.deadline || "");
+    return m ? Number(m[2]) + "월 " + Number(m[3]) + "일까지" : "";
+  }
+
   function el(tag, className, text) {
     var n = document.createElement(tag);
     if (className) n.className = className;
@@ -30,53 +34,52 @@
     return n;
   }
 
-  function renderContest(c) {
-    var li = el("li", "contest");
+  function renderContest(c, i) {
+    var li = el("li", "card");
+    li.setAttribute("data-reveal", "");
+    li.style.setProperty("--i", String(i % 3));
 
-    var due = el("span", "contest__due", dueLabel(c));
+    var top = el("div", "card__top");
+    var due = el("span", "badge", dueLabel(c));
     if (c.urgent) due.setAttribute("data-urgent", "1");
-    li.appendChild(due);
+    top.appendChild(due);
+    var date = dateLabel(c);
+    if (date) top.appendChild(el("span", "card__date", date));
+    li.appendChild(top);
 
-    var body = el("div", "contest__body");
+    li.appendChild(el("h3", "card__title", c.title));
+    if (c.eligibility) li.appendChild(el("p", "card__elig", c.eligibility));
+    if (c.team_note) li.appendChild(el("p", "card__note", c.team_note));
+    else if (c.summary) li.appendChild(el("p", "card__summary", c.summary));
 
-    body.appendChild(el("h3", "contest__title", c.title));
-
-    var meta = el("p", "contest__meta");
-    if (c.host) meta.appendChild(el("span", null, c.host));
-    if (c.eligibility) meta.appendChild(el("span", null, c.eligibility));
-    if (meta.childNodes.length) body.appendChild(meta);
-
-    if (c.summary) body.appendChild(el("p", "contest__summary", c.summary));
-
-    var actions = el("div", "contest__actions");
-
-    var apply = el("a", "btn", "지원하기");
+    var actions = el("div", "card__actions");
+    var apply = el("a", "card__apply", "지원하기");
     apply.href = "./apply.html?c=" + encodeURIComponent(c.contest_id);
     actions.appendChild(apply);
 
     if (c.url && /^https?:\/\//i.test(c.url)) {
-      var src = el("a", "contest__source", "공고 원문");
+      var src = el("a", "card__source", "공고 원문");
       src.href = c.url;
       src.target = "_blank";
       src.rel = "noopener noreferrer";
       actions.appendChild(src);
     }
-
-    body.appendChild(actions);
-    li.appendChild(body);
+    li.appendChild(actions);
     return li;
   }
-
-  API.headlineQuestion().then(function (q) {
-    if (q && headlineEl) headlineEl.textContent = "“" + q + "”";
-  });
 
   API.listContests().then(function (rows) {
     if (!rows.length) {
       setState("지금은 모집 중인 공모전이 없습니다. 새로 열리면 이 자리에 올라옵니다.", false);
       return;
     }
-    rows.forEach(function (c) { listEl.appendChild(renderContest(c)); });
+    rows.forEach(function (c, i) {
+      var node = renderContest(c, i);
+      listEl.appendChild(node);
+      window.CTMotion.observe(node);
+    });
+    countEl.textContent = rows.length + "건";
+    countEl.hidden = false;
     listEl.hidden = false;
     stateEl.hidden = true;
 

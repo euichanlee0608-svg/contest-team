@@ -7,12 +7,8 @@
 
    비워 두면 자동으로 data/feed.sample.json 을 읽어 화면만 확인할 수 있다(제출은 막힌다). */
 window.CONTEST_TEAM_CONFIG = {
-  GAS_URL: "",
-  PUBLIC_KEY: "",
-
-  /* 첫 화면에 크게 걸리는 질문. 문항 시트의 첫 공통문항이 내려오면 그것으로 대체된다.
-     네트워크가 느려도 첫 화면이 비어 보이지 않게 하는 기본값이다. */
-  FALLBACK_QUESTION: "북극곰의 멸종을 막으려면 어떻게 해야 할까요?",
+  GAS_URL: "https://script.google.com/macros/s/AKfycbzNITPCE26PJYkXxu5LVCZ0361UQZ7v2SwwPi1J0RiA8aJm_749faNySlPUA18JjCNSyQ/exec",
+  PUBLIC_KEY: "490ae8741fd5449c8872c98df6fca52bac0fefdb68736530",
 
   /* 마감이 이 일수 이하로 남으면 목록에서 빨갛게 표시한다. */
   URGENT_DAYS: 7,

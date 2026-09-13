@@ -6,8 +6,8 @@
 
    핵심은 셋이다 — 2단계에서 구현이 통째로 바뀌는 것들이다.
      listContests()  getQuestions(contestId)  submitApplication(payload)
-   나머지 다섯은 그 위에 얹혔거나 로컬 계산이라 그대로 간다.
-     getContest(id)  headlineQuestion()  applicantId()  daysLeft(d)  isConfigured()
+   나머지 넷은 그 위에 얹혔거나 로컬 계산이라 그대로 간다.
+     getContest(id)  applicantId()  daysLeft(d)  isConfigured()
 
    화면 코드는 fetch 를 직접 부르지 않는다. 네트워크를 타는 건 이 파일뿐이다.
    ───────────────────────────────────────────────────────────── */
@@ -173,19 +173,6 @@
     });
   }
 
-  /* 첫 화면 헤드라인으로 쓸 질문(첫 공통문항). 없으면 설정의 기본값. */
-  function headlineQuestion() {
-    return fetchFeed().then(function (feed) {
-      var commons = feed.questions.filter(function (q) {
-        return (q.contest_id || "").trim() === "" &&
-               String(q.use || "Y").toUpperCase() !== "N" && q.text;
-      }).sort(function (a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); });
-      return commons.length ? commons[0].text : (CFG.FALLBACK_QUESTION || "");
-    }).catch(function () {
-      return CFG.FALLBACK_QUESTION || "";
-    });
-  }
-
   /* 지원서 제출.
      본문을 text/plain 으로 보내는 이유: application/json 이면 브라우저가 CORS 프리플라이트를
      날리는데 Apps Script 웹앱은 OPTIONS 를 처리하지 못해 제출이 통째로 실패한다. */
@@ -226,7 +213,6 @@
     listContests: listContests,
     getContest: getContest,
     getQuestions: getQuestions,
-    headlineQuestion: headlineQuestion,
     submitApplication: submitApplication,
     applicantId: applicantId,
     daysLeft: daysLeft,
