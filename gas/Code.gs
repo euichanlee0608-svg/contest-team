@@ -389,9 +389,15 @@ function handleInbox_(after) {
   var qrows = readTab_(ss, TAB_QUESTION, 3);
   for (var j = 0; j < qrows.length; j++) qtext[s_(qrows[j][0])] = s_(qrows[j][2]);
 
+  // 재제출 판정용 B열(applicant_id). 2행부터 이번에 보낼 마지막 행까지만 읽는다.
+  var ids = sh.getRange(2, 2, from - 1 + capped, 1).getValues();
+
   var items = [];
   for (var i = 0; i < values.length; i++) {
     var v = values[i];
+    var aid = s_(v[1]);
+    var before = 0;                                  // 이 행보다 위에 같은 applicant_id 가 몇 번 있었나
+    for (var r = 0; r < from - 1 + i; r++) if (aid && s_(ids[r][0]) === aid) before++;
     var qids = s_(v[7]) ? s_(v[7]).split(',') : [];
     var answers = [];
     for (var k = 0; k < qids.length && k < MAX_ANSWERS; k++) {
@@ -401,6 +407,9 @@ function handleInbox_(after) {
     items.push({
       row: from + 1 + i,
       at: at_(v[0], tz),
+      applicant_id: aid,
+      prior_submissions: before,
+      contest_id: s_(v[2]),
       contest_title: s_(v[3]),
       name: s_(v[4]),
       contact: s_(v[5]),

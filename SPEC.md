@@ -176,8 +176,10 @@ GAS 가 A~R 에 **추가만** 한다(수정·삭제 없음). **S 이후는 내 �
 
 ### `GET ?t=inbox&key=ADMIN_KEY&after=<행번호>`
 - `after` 이후에 새로 쌓인 지원을 **답변까지** 반환(한 번에 30건, 나머지는 다음 호출):
-  `{"ok":true,"last_row":N,"items":[{"row":12,"at":"…","contest_title":"…","name":"홍길동","contact":"…","affiliation":"…","answers":[{"qid":"c1","question":"(문항 탭 C열 또는 공통 항목 이름)","text":"…"}]}]}`
+  `{"ok":true,"last_row":N,"items":[{"row":12,"at":"…","applicant_id":"…","prior_submissions":0,"contest_id":"…","contest_title":"…","name":"홍길동","contact":"…","affiliation":"…","answers":[{"qid":"c1","question":"(문항 탭 C열 또는 공통 항목 이름)","text":"…"}]}]}`
 - ADMIN_KEY 전용이다. 공모전봇이 오너 텔레그램으로만 보낸다. 채점 열(S~)은 읽지 않는다.
+- **텔레그램 메시지만 보고 시트를 안 열어도 되게** A~R 전부를 싣는다(2026-09-14 사용자 요청). `prior_submissions` 는
+  같은 applicant_id 가 위쪽 행에 있던 횟수(재제출 표시), 봇은 `contest_id` 로 DB 에서 마감일·공고 링크를 붙인다.
 
 ## 5. 프론트 구조 — 교체 지점(seam)
 
