@@ -646,3 +646,20 @@ a { color: inherit; }
 @media (max-width: 640px) {
   .operator__list li { grid-template-columns: 1fr; gap: 0.2rem; }
 }
+
+/* ── 서술형 시작 안내 · 개인정보 안내(2026-09-15) ── */
+.step__intro {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--paper-2);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--ink);
+  max-width: 40rem;
+}
+.foot__privacy { flex-basis: 100%; order: 3; font-size: 0.75rem; color: var(--ink-faint); }
+.foot__privacy summary { cursor: pointer; width: fit-content; }
+.foot__privacy p { margin: 0.5rem 0 0; max-width: 46rem; line-height: 1.7; }
+.operator__list li { grid-template-columns: 5.25rem minmax(0, 1fr); }
+@media (max-width: 640px) { .operator__list li { grid-template-columns: 1fr; } }

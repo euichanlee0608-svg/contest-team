@@ -44,7 +44,10 @@ var TAB_APPLY = '지원';
 
 // A~J 는 봇이 덮어쓰고 K·L 은 사람이 적는다. setup() 은 헤더만 깔고 값은 안 건드린다.
 var HEAD_CONTEST = ['contest_id', '제목', '링크', '마감표기', '마감일', '주최',
-                    '지원자격', '요약', '출처', '갱신시각', '모집상태', '팀소개'];
+                    '지원자격', '요약', '출처', '갱신시각', '모집상태', '팀소개', '봇표시'];
+// M열 '봇표시' 는 봇 몫(2026-09-15): 관심 해제·만료로 봇 목록에서 빠진 공고에 '해제' 를 적어 피드에서 뺀다.
+// 행을 지우지 않는 이유 — K·L(사람 기록)과 지원 탭의 공모전제목 스냅샷이 가리키는 행을 보존한다.
+var CONTEST_HIDE_COL = 13;
 var HEAD_QUESTION = ['qid', 'contest_id', '질문', '도움말', '순서', '최대글자수', '사용'];
 // A~R 만 코드가 쓴다. S열 이후(사고력·협업·메모·결과)는 사람 몫이라 헤더조차 만들지 않는다.
 var HEAD_APPLY = ['제출시각', 'applicant_id', 'contest_id', '공모전제목', '이름', '연락처', '소속',
@@ -151,7 +154,7 @@ function setup() {
   made.push(ensureTab_(ss, TAB_QUESTION, HEAD_QUESTION));
   made.push(ensureTab_(ss, TAB_APPLY, HEAD_APPLY));
 
-  var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY);
+  var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY).concat(extendHeader_(tab_(ss, TAB_CONTEST), HEAD_CONTEST));
 
   var qsh = tab_(ss, TAB_QUESTION);
   if (qsh.getLastRow() < 2) {
@@ -192,6 +195,7 @@ function handleFeed_() {
 
     // K열 모집상태: '닫힘' 만 닫힌 것으로 본다. 빈칸은 열림(SPEC 3장), 오타는 열림 쪽으로 둔다.
     if (s_(r[10]) === '닫힘') continue;
+    if (s_(r[12]) === '해제') continue;      // M열: 봇 관심목록에서 빠진 공고
 
     // E열 마감일이 오늘보다 과거면 뺀다. **빈칸이면 빼지 않는다**
     // (공모전봇 철학 — 근거가 없으면 노출을 유지한다).
@@ -313,7 +317,7 @@ function handleSync_(body) {
 
   var now = isoKst_(new Date());
   var ss = ss_();
-  var result = { updated: 0, inserted: 0 };
+  var result = { updated: 0, inserted: 0, hidden: 0 };
 
   withLock_(function () {
     var sh = tab_(ss, TAB_CONTEST);
@@ -341,6 +345,7 @@ function handleSync_(body) {
       if (index[cid] && index[cid] > 0) {
         // A~J 만 덮어쓴다. 범위를 10칸으로 못 박는 것이 K·L 보호의 전부다.
         sh.getRange(index[cid], 1, 1, CONTEST_BOT_COLS).setValues([row]);
+        sh.getRange(index[cid], CONTEST_HIDE_COL).setValue('');   // 다시 관심 → 가림 해제
         result.updated++;
       } else if (index[cid] === -1) {
         // 같은 요청 안에 같은 id 가 두 번 왔다. 이미 추가 예정인 행을 갱신해 중복 행을 막는다.
@@ -359,10 +364,27 @@ function handleSync_(body) {
       // 한 번에 쓴다. 폭이 10칸이라 새 행의 K·L 은 빈칸으로 남는다(사람이 나중에 채운다).
       sh.getRange(sh.getLastRow() + 1, 1, inserts.length, CONTEST_BOT_COLS).setValues(inserts);
     }
+
+    // replace:true = 봇이 '지금 관심목록 전체'를 보냈다. 목록에 없는 행은 M열 '해제' 로 가리고, 있는 행은 비운다.
+    if (body.replace === true) {
+      var keep = {};
+      for (var q = 0; q < items.length; q++) keep[s_((items[q] || {}).contest_id)] = true;
+      var total = sh.getLastRow();
+      if (total >= 2) {
+        var col = sh.getRange(2, 1, total - 1, 1).getValues();
+        var marks = [];
+        for (var z = 0; z < col.length; z++) {
+          var rid = s_(col[z][0]);
+          marks.push([rid && !keep[rid] ? '해제' : '']);
+          if (rid && !keep[rid]) result.hidden++;
+        }
+        sh.getRange(2, CONTEST_HIDE_COL, total - 1, 1).setValues(marks);
+      }
+    }
     SpreadsheetApp.flush();
   });
 
-  return { ok: true, updated: result.updated, inserted: result.inserted };
+  return { ok: true, updated: result.updated, inserted: result.inserted, hidden: result.hidden };
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -280,6 +280,12 @@
   /* ── 서술형 단계(시트 [문항] 탭) ── */
   function buildTextStep(q, index) {
     var sec = shell(index, q.text, q.help);
+    if (index === PROFILE.length) {
+      /* 첫 서술형 앞에 한 번만 — 소요 시간 대신 태도를 부탁한다(2026-09-15 오너 결정) */
+      sec.insertBefore(el("p", "step__intro",
+        "여기부터는 서술형 질문입니다. 서로 잘 맞는 팀인지 가늠하는 가장 중요한 자료라, " +
+        "짧아도 괜찮으니 본인의 경험과 생각으로 성실하게 적어주세요."), sec.querySelector(".step__q"));
+    }
 
     var ta = el("textarea", "sheet");
     ta.placeholder = "여기에 편하게 쓰세요. 분량보다 생각의 흐름이 궁금합니다.";

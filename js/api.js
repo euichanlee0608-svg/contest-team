@@ -6,8 +6,8 @@
 
    핵심은 셋이다 — 2단계에서 구현이 통째로 바뀌는 것들이다.
      listContests()  getQuestions(contestId)  submitApplication(payload)
-   나머지 넷은 그 위에 얹혔거나 로컬 계산이라 그대로 간다.
-     getContest(id)  applicantId()  daysLeft(d)  isConfigured()
+   나머지 다섯은 그 위에 얹혔거나 로컬 계산이라 그대로 간다.
+     getContest(id)  applicantId()  daysLeft(d)  isConfigured()  isStale()
 
    화면 코드는 fetch 를 직접 부르지 않는다. 네트워크를 타는 건 이 파일뿐이다.
    ───────────────────────────────────────────────────────────── */
@@ -15,7 +15,7 @@
   "use strict";
 
   var CFG = global.CONTEST_TEAM_CONFIG || {};
-  var TIMEOUT_MS = 12000;
+  var TIMEOUT_MS = 15000;
   var SAMPLE_URL = "./data/feed.sample.json";
   var STORE_ID = "ct_applicant_id";
 
@@ -84,31 +84,72 @@
     return Math.round((d.getTime() - todayKST().getTime()) / 86400000);
   }
 
+  /* ── 목록 불러오기 ── 2026-09-15 보강. GAS 응답은 맥에서 재도 1.7~4.1초(대부분 script.google.com →
+     googleusercontent 리다이렉트 시간)라, 느린 폰 회선·앱 내 브라우저·콜드 스타트가 겹치면 한 번에 실패할 수 있다.
+     ① 시도당 15초, 실패하면 1.5초 쉬고 한 번 더 ② 그래도 안 되면 이 브라우저에 저장해 둔 최근 목록(7일 이내)
+     ③ 그것도 없으면 배포 때 구워 둔 스냅샷(공개판만 있다) ④ 전부 없으면 원래 오류. 폴백이면 isStale() = true. */
   var cache = null;
+  var CACHE_KEY = "ct_feed_cache";
+  var CACHE_MAX_AGE = 7 * 86400000;
+  var SNAPSHOT_URL = "./data/feed.snapshot.json";
+  var ATTEMPTS = 2;
+
+  function getJSON(url) {
+    return withTimeout(function (signal) {
+      return fetch(url, { method: "GET", signal: signal, credentials: "omit", cache: "no-store" });
+    }).then(function (res) {
+      if (!res.ok) throw new Error("서버 응답 " + res.status);
+      return res.json().catch(function () { throw new Error("응답 형식 오류"); });
+    }).then(function (data) {
+      if (!data || data.ok === false) throw new Error((data && data.error) || "목록을 읽지 못했습니다.");
+      return data;
+    }, function (err) {
+      throw (err && err.name === "AbortError") ? new Error("응답 시간 초과") : err;
+    });
+  }
+
+  function remember(data) {
+    writeStore(CACHE_KEY, JSON.stringify({ saved_at: Date.now(), data: data }));
+  }
+  function recall() {
+    try {
+      var v = JSON.parse(readStore(CACHE_KEY) || "null");
+      return (v && Date.now() - v.saved_at < CACHE_MAX_AGE) ? v.data : null;
+    } catch (e) { return null; }
+  }
+
+  function live(attempt) {
+    return getJSON(endpoint("feed")).catch(function (err) {
+      if (attempt + 1 >= ATTEMPTS) throw err;
+      return new Promise(function (r) { setTimeout(r, 1500); }).then(function () { return live(attempt + 1); });
+    });
+  }
 
   function fetchFeed() {
     if (cache) return Promise.resolve(cache);
+    var got = configured()
+      ? live(0).then(function (d) { remember(d); return { data: d, stale: false }; }, function (err) {
+          var kept = recall();
+          if (kept) return { data: kept, stale: true };
+          return getJSON(SNAPSHOT_URL).then(function (d) { return { data: d, stale: true }; },
+                                            function () { throw err; });
+        })
+      : getJSON(SAMPLE_URL).then(function (d) { return { data: d, stale: false }; });
 
-    var url = configured() ? endpoint("feed") : SAMPLE_URL;
-
-    return withTimeout(function (signal) {
-      return fetch(url, { method: "GET", signal: signal, credentials: "omit" });
-    }).then(function (res) {
-      if (!res.ok) throw new Error("서버 응답 " + res.status);
-      return res.json();
-    }).then(function (data) {
-      if (!data || data.ok === false) {
-        throw new Error((data && data.error) || "목록을 읽지 못했습니다.");
-      }
+    return got.then(function (r) {
       cache = {
-        contests: Array.isArray(data.contests) ? data.contests : [],
-        questions: Array.isArray(data.questions) ? data.questions : [],
-        generated_at: data.generated_at || null,
+        contests: Array.isArray(r.data.contests) ? r.data.contests : [],
+        questions: Array.isArray(r.data.questions) ? r.data.questions : [],
+        generated_at: r.data.generated_at || null,
         sample: !configured(),
+        stale: r.stale,
       };
       return cache;
     });
   }
+
+  /* 지금 화면의 목록이 폴백(저장분·스냅샷)인가. 목록을 한 번 불러온 뒤에만 의미가 있다. */
+  function isStale() { return !!(cache && cache.stale); }
 
   /* 모집 중인 공모전. 마감일이 지났거나 마감일을 모르는 것은 뺀다(2026-09-14 사용자 결정 — '마감 미정'은 목록에 두지 않는다). */
   function listContests() {
@@ -215,5 +256,6 @@
     applicantId: applicantId,
     daysLeft: daysLeft,
     isConfigured: configured,
+    isStale: isStale,
   };
 })(window);

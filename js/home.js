@@ -84,8 +84,15 @@
 
     if (!API.isConfigured()) {
       setState("표본 데이터로 화면만 보여주는 중입니다. 실제 접수는 아직 열리지 않았습니다.", false);
+    } else if (API.isStale()) {
+      setState("서버 응답이 늦어 최근에 불러온 목록을 보여드립니다. 지원서는 정상적으로 접수됩니다.", false);
     }
   }).catch(function (err) {
-    setState("목록을 불러오지 못했습니다. 잠시 뒤 새로고침해 주세요. (" + err.message + ")", true);
+    setState("목록을 불러오지 못했습니다. (" + err.message + ") ", true);
+    var again = el("button", "btn btn--ghost", "다시 불러오기");
+    again.type = "button";
+    again.style.marginLeft = "0.5rem";
+    again.addEventListener("click", function () { location.reload(); });
+    stateEl.appendChild(again);
   });
 })();

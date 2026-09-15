@@ -89,6 +89,7 @@ scope 는 `gmail.readonly`·`calendar.events`·`gmail.compose` 뿐이라 시트�
 | J | 갱신시각 | 봇 | ISO8601 |
 | K | 모집상태 | **사람** | `열림` / `닫힘` / 빈칸(=열림) |
 | L | 팀소개 | **사람** | 이 공모전에서 어떤 팀을 꾸리는지. 비면 기본 문구 |
+| M | 봇표시 | 봇 | `해제` 면 피드에서 뺀다(관심 해제·만료로 봇 목록에서 빠짐). `replace` 동기화만 쓴다(2026-09-15) |
 
 ### 탭 `문항`
 | 열 | 이름 | 비고 |
@@ -173,8 +174,11 @@ GAS 가 A~R 에 **추가만** 한다(수정·삭제 없음). **S 이후는 내 �
                   "deadline": "2026-10-15", "host": "…", "eligibility": "…",
                   "summary": "…", "source": "…" } ] }
 ```
-- A열 `contest_id` 기준 **업서트**(있으면 A~J만 갱신, 없으면 새 행 추가). K·L 은 절대 안 건드린다.
-- 응답 `{"ok":true,"updated":n,"inserted":m}`
+- A열 `contest_id` 기준 **업서트**(있으면 A~J만 갱신 + M 비움, 없으면 새 행 추가). K·L 은 절대 안 건드린다.
+- `"replace": true`(2026-09-15, `push_all` 전용): 보낸 목록이 봇 관심목록 **전체**라는 뜻. 목록에 없는 행은 M열 `해제`,
+  있는 행은 M 을 비운다. 행은 지우지 않는다(K·L 사람 기록과 지원 탭 스냅샷 보존). 빈 목록 + replace = 전부 가림.
+  구버전 GAS 는 이 키를 무시한다(가리기만 안 됨). 응답에 `hidden` 이 붙는다.
+- 응답 `{"ok":true,"updated":n,"inserted":m,"hidden":h}`
 
 ### `GET ?t=inbox&key=ADMIN_KEY&after=<행번호>`
 - `after` 이후에 새로 쌓인 지원을 **답변까지** 반환(한 번에 30건, 나머지는 다음 호출):
@@ -195,7 +199,11 @@ js/api.js    ← 데이터 접근은 전부 여기. config 를 읽고 바깥과 
 | 구분 | 함수 | 2단계에서 |
 |---|---|---|
 | 핵심 3 | `listContests()` · `getQuestions(contestId)` · `submitApplication(payload)` | 구현이 통째로 바뀐다 |
-| 보조 4 | `getContest(id)` · `applicantId()` · `daysLeft(d)` · `isConfigured()` | 앞의 셋 위에 얹힌 것이거나 로컬 계산이라 그대로 간다 |
+| 보조 5 | `getContest(id)` · `applicantId()` · `daysLeft(d)` · `isConfigured()` · `isStale()` | 앞의 셋 위에 얹힌 것이거나 로컬 계산이라 그대로 간다 |
+
+**목록 폴백(2026-09-15):** 라이브 피드(시도당 15초 × 2회) → 이 브라우저 저장분(7일) → `data/feed.snapshot.json`
+(공개판 빌드가 배포 시점 목록을 굽는다, 지인판엔 없음) → 오류. 폴백으로 그리면 `isStale()` 이 true 이고 화면에 안내가 뜬다.
+지원서 제출은 폴백과 무관하게 항상 라이브 GAS 로 간다.
 
 **화면 코드는 `fetch` 를 직접 부르지 않는다.** 네트워크를 타는 것은 이 파일뿐이어야 한다.
 화면 코드는 데이터가 시트에서 오는지 DB 에서 오는지 모른다. **2단계(매칭 서비스)에서 이 파일만
