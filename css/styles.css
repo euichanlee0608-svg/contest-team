@@ -613,3 +613,36 @@ a { color: inherit; }
     transition-delay: 0ms !important;
   }
 }
+
+/* ── 운영자 이력 (공개판 recruit-lab 에만 들어간다 — tools/build_public.py) ── */
+.operator {
+  max-width: 62rem;
+  margin-top: clamp(2rem, 5vh, 3rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+.operator__title { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-faint); margin: 0 0 0.9rem; }
+.operator__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.operator__list li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: baseline;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.operator__tag {
+  justify-self: start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--paper-2);
+  border-radius: 999px;
+  padding: 0.2em 0.65em;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .operator__list li { grid-template-columns: 1fr; gap: 0.2rem; }
+}

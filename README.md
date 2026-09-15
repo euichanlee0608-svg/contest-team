@@ -195,6 +195,14 @@ gh repo create contest-team --public --source=. --push
 
 ---
 
+## 공개판 배포 (모르는 사람용, Cloudflare Pages)
+
+```bash
+npx wrangler login              # 최초 1회(브라우저 로그인)
+bash tools/deploy_public.sh     # JS 검사 → 공개판 빌드(신원 흔적 게이트) → 비콘 검사 → recruit-lab 배포
+```
+지인용(GitHub Pages)은 `git push` 로 따로 나간다. 운영자 이력 문구는 `public/operator.html`.
+
 ## 검증 게이트 (배포 전 필수)
 
 프론트/GAS 를 고쳤으면:

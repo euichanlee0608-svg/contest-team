@@ -60,6 +60,18 @@ ROADMAP 2장(운영자 이력 블록·팀원 모집 톤·홍보 전 점검)을 �
 
 ## 배포
 
+- **배포처가 둘이다(2026-09-15).** 소스는 하나(루트), 결과물만 갈린다.
+  | 판 | 대상 | 주소 | 배포 |
+  |---|---|---|---|
+  | 지인용 | 아는 사람 | GitHub Pages `contest-team` | `git push`(루트 그대로) |
+  | 공개판 | 모르는 사람 | Cloudflare Pages `recruit-lab` | `bash tools/deploy_public.sh` |
+- **공개판 차이는 `tools/build_public.py` 에만 둔다** — 루트 HTML 의 `<!-- friends-only:start/end -->` 구간(포트폴리오
+  링크) 제거, `<!-- public-slot:operator -->` 에 `public/operator.html`(운영자 이력) 삽입, 비콘 SITE `recruit_lab`.
+  이 표식을 지우거나 공개판용 파일을 따로 복사해 고치지 않는다(두 벌이 조용히 어긋난다).
+- **공개판에는 오너 신원(깃허브 아이디·포트폴리오 주소)이 절대 들어가지 않는다.** 빌드 스크립트가 흔적을 찾으면
+  실패하므로, 새 링크·문구를 넣을 때 신원이 드러나면 `friends-only` 구간 안에 넣는다.
+- 운영자 이력(`public/operator.html`)은 **오너가 준 문구만** 쓴다. 바꿀 땐 오너 확인.
+
 - 배포 전 게이트 4종을 건너뛰지 않는다. 정확한 명령은 `README.md` 끝에 있다. 두 함정 주의:
   **`node --check` 는 인자를 여러 개 줘도 첫 파일만 본다**(`for` 로 하나씩), 그리고
   **이 맥의 헤드리스 크롬은 뷰포트를 500px 아래로 못 내린다**(390px 실측은 iframe 으로 고정해야 진짜다).
