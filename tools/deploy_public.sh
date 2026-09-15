@@ -9,6 +9,8 @@ for f in js/*.js; do node --check "$f"; done            # node --check 는 첫 �
 python3 tools/build_public.py                            # 마스킹·이력 삽입 + 신원 흔적 게이트
 node ~/webstats/check_beacon.js dist/recruit-lab/index.html dist/recruit-lab/apply.html
 
-npx --yes wrangler pages project list 2>/dev/null | grep -q "recruit-lab" \
-  || npx --yes wrangler pages project create recruit-lab --production-branch main
-npx --yes wrangler pages deploy dist/recruit-lab --project-name recruit-lab --branch main --commit-dirty=true
+# --force: wrangler 4.13x 는 pages 명령을 Workers 로 넘기려다 실패한다(2026-09-15 실측). Workers 주소
+# (*.<계정서브도메인>.workers.dev)는 계정 이름이 드러날 수 있으므로 기존 Pages(*.pages.dev)로 강제한다.
+npx --yes wrangler pages project list --force 2>/dev/null | grep -q "recruit-lab" \
+  || npx --yes wrangler pages project create recruit-lab --production-branch main --force
+npx --yes wrangler pages deploy dist/recruit-lab --project-name recruit-lab --branch main --commit-dirty=true --force
