@@ -281,14 +281,14 @@
   function buildTextStep(q, index) {
     var sec = shell(index, q.text, q.help);
     if (index === PROFILE.length) {
-      /* 첫 서술형 앞에 한 번만 — 소요 시간 대신 태도를 부탁한다(2026-09-15 오너 결정) */
+      /* 첫 서술형 앞에 한 번만 — 소요 시간 대신 '최대한 자세히'를 요구한다(2026-09-15 오너 결정) */
       sec.insertBefore(el("p", "step__intro",
-        "여기부터는 서술형 질문입니다. 서로 잘 맞는 팀인지 가늠하는 가장 중요한 자료라, " +
-        "짧아도 괜찮으니 본인의 경험과 생각으로 성실하게 적어주세요."), sec.querySelector(".step__q"));
+        "여기부터는 서술형 질문입니다. 선발의 가장 중요한 근거이니, " +
+        "본인의 경험과 생각을 구체적인 근거와 함께 최대한 자세히 적어주세요."), sec.querySelector(".step__q"));
     }
 
     var ta = el("textarea", "sheet");
-    ta.placeholder = "여기에 편하게 쓰세요. 분량보다 생각의 흐름이 궁금합니다.";
+    ta.placeholder = "구체적인 경험과 근거를 들어 최대한 자세히 적어주세요.";
     sec.appendChild(ta);
 
     var foot = el("div", "sheet-foot");
@@ -313,7 +313,7 @@
 
     function validate() {
       var v = ta.value.trim();
-      if (!v) return "한 줄이라도 남겨주세요. 정답을 맞히는 질문이 아닙니다.";
+      if (!v) return "답변을 적어주세요.";
       if (v.length > q.max_chars) return q.max_chars + "자 안으로 줄여주세요.";
       return null;
     }
