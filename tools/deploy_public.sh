@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 모르는 사람용 공개판 배포 → https://recruit-lab.pages.dev (Cloudflare Pages, 프로젝트 recruit-lab)
 # 지인용(GitHub Pages)은 git push 로 따로 나간다. 이 스크립트는 그쪽을 건드리지 않는다.
-# 최초 1회: npx wrangler login
+# 최초 1회: npx wrangler login (+ Cloudflare 계정 이메일 인증 — 안 하면 code 8000077 로 프로젝트 생성 실패)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

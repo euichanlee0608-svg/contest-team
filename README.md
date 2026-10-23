@@ -203,6 +203,12 @@ bash tools/deploy_public.sh     # JS 검사 → 공개판 빌드(신원 흔적 �
 ```
 지인용(GitHub Pages)은 `git push` 로 따로 나간다. 운영자 이력 문구는 `public/operator.html`.
 
+막혔을 때 (2026-09-15 실측):
+- `Your user email must been verified [code: 8000077]` → Cloudflare 계정 **이메일 인증**을 안 한 것. 대시보드에서 인증 메일의 버튼을 누르면 풀린다.
+- `wrangler pages project create` 가 Workers 로 넘기려다 실패 → 스크립트가 **프로젝트 최초 생성 때만** `--force` 를 붙인다. 이후 deploy 에는 붙이지 않는다.
+- 배포 주소는 `recruit-lab.pages.dev`(Pages). Workers 주소(`*.workers.dev`)는 계정 이름이 드러나서 일부러 피했다.
+- 사이트 응답 확인은 `curl`/`urllib` 기본 UA 가 403 이므로 브라우저 UA 를 줘야 한다.
+
 ## 검증 게이트 (배포 전 필수)
 
 프론트/GAS 를 고쳤으면:
