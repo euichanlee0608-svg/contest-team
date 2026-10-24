@@ -34,30 +34,29 @@
   }
 
   function renderContest(c, i) {
-    var li = el("li", "card");
-    li.setAttribute("data-reveal", "");
-    li.style.setProperty("--i", String(i % 3));
+    var li = el("li", "post");
+    li.style.setProperty("--d", Math.min(i, 8) * 45 + "ms");
 
-    var top = el("div", "card__top");
-    var due = el("span", "badge", dueLabel(c));
+    var top = el("div", "post__top");
+    var due = el("span", "due", dueLabel(c));
     if (c.urgent) due.setAttribute("data-urgent", "1");
     top.appendChild(due);
     var date = dateLabel(c);
-    if (date) top.appendChild(el("span", "card__date", date));
+    if (date) top.appendChild(el("span", "post__date", date));
     li.appendChild(top);
 
-    li.appendChild(el("h3", "card__title", c.title));
-    if (c.eligibility) li.appendChild(el("p", "card__elig", c.eligibility));
-    if (c.team_note) li.appendChild(el("p", "card__note", c.team_note));
-    else if (c.summary) li.appendChild(el("p", "card__summary", c.summary));
+    li.appendChild(el("h3", "post__title", c.title));
+    if (c.eligibility) li.appendChild(el("p", "post__elig", c.eligibility));
+    if (c.team_note) li.appendChild(el("p", "post__note", c.team_note));
+    else if (c.summary) li.appendChild(el("p", "post__summary", c.summary));
 
-    var actions = el("div", "card__actions");
-    var apply = el("a", "card__apply", "지원하기");
+    var actions = el("div", "post__actions");
+    var apply = el("a", "post__apply", "지원하기");
     apply.href = "./apply.html?c=" + encodeURIComponent(c.contest_id);
     actions.appendChild(apply);
 
     if (c.url && /^https?:\/\//i.test(c.url)) {
-      var src = el("a", "card__source", "공고 원문");
+      var src = el("a", "post__source", "공고 원문");
       src.href = c.url;
       src.target = "_blank";
       src.rel = "noopener noreferrer";
@@ -75,7 +74,6 @@
     rows.forEach(function (c, i) {
       var node = renderContest(c, i);
       listEl.appendChild(node);
-      window.CTMotion.observe(node);
     });
     countEl.textContent = rows.length + "건";
     countEl.hidden = false;

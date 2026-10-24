@@ -469,7 +469,7 @@
       }
 
       ctxTitle.textContent = contest.title;
-      var due = el("span", "badge", dueLabel(contest));
+      var due = el("span", "due", dueLabel(contest));
       if (contest.urgent) due.setAttribute("data-urgent", "1");
       ctxMeta.appendChild(due);
       if (contest.url && /^https?:\/\//i.test(contest.url)) {
