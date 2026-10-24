@@ -390,6 +390,7 @@
   /* ── 제출 ── */
   function onSubmit(ev) {
     ev.preventDefault();
+    if (window.Wait.isBusy(submitBtn)) return;
     errEl.hidden = true;
 
     var name = document.getElementById("f-name").value.trim();
@@ -411,8 +412,13 @@
 
     writeDraft(collectDraft());   /* 보내기 직전에 한 번 더. 실패해도 글은 남는다. */
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = "보내는 중";
+    var release = window.Wait.press(submitBtn, "보내는 중");
+    var stopHint = window.Wait.status(errEl, [
+      [0, "지원서를 보내는 중입니다."],
+      [4, "응답이 조금 늦습니다. 다시 누르지 않아도 계속 보내는 중입니다."],
+      [10, "평소보다 오래 걸립니다. 글은 이 기기에 저장돼 있어 창을 닫아도 잃지 않습니다."],
+    ]);
+    errEl.className = "notice";
 
     API.submitApplication({
       contest_id: contestId,
@@ -422,6 +428,7 @@
       answers: answers,
     }).then(function () {
       clearDraft();
+      errEl.hidden = true;
       stateEl.hidden = true;
       steps.forEach(function (s) { s.node.hidden = true; });
       whoEl.hidden = true;
@@ -438,13 +445,14 @@
       showError("제출하지 못했습니다. " + err.message +
                 " 고른 답과 쓴 글은 그대로 저장돼 있으니 잠시 뒤 다시 눌러주세요.");
     }).finally(function () {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "제출하기";
+      stopHint();
+      release();
     });
   }
 
   function showError(text) {
     errEl.textContent = text;
+    errEl.className = "notice notice--bad";
     errEl.hidden = false;
   }
 
@@ -454,8 +462,14 @@
     return;
   }
 
+  var stopLoad = window.Wait.status(stateEl, [
+    [0, "지원서를 불러오는 중입니다."],
+    [4, "서버를 깨우는 중입니다. 보통 5~10초 걸립니다."],
+    [10, "평소보다 오래 걸립니다. 다시 누르지 않아도 계속 불러오는 중입니다."],
+  ]);
   Promise.all([API.getContest(contestId), API.getQuestions(contestId)])
     .then(function (pair) {
+      stopLoad();
       contest = pair[0];
       var questions = pair[1];
 
@@ -531,6 +545,7 @@
       }
     })
     .catch(function (err) {
+      stopLoad();
       setState("불러오지 못했습니다. 잠시 뒤 새로고침해 주세요. (" + err.message + ")", true);
     });
 })();
