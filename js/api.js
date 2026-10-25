@@ -262,6 +262,7 @@
       title: payload.title,
       link: payload.link || "",
       note: payload.note || "",
+      answers: payload.answers || [],
       hp: payload.hp || "",
     });
     return withTimeout(function (signal) {

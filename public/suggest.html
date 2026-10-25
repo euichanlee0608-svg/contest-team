@@ -23,19 +23,16 @@
   <aside class="apply__side" id="ctx">
     <p class="ctx__kicker">공모전 제안</p>
     <h1 class="ctx__title">목록에 없는 공모전을 알려주세요.</h1>
-    <p class="ctx__note">제목이나 공고 주소만 있어도 됩니다. 확인해서 함께할 만하면 다음 모집에 검토합니다.</p>
+    <p class="ctx__note">제목이나 공고 주소만 있어도 됩니다. 확인해 본 뒤, 다음 모집에서 함께할 수 있을지 살펴보겠습니다. 이어지는 질문은 모집 지원서와 같습니다.</p>
     <div class="progress" aria-hidden="true"><div class="progress__bar" id="progress-bar"></div></div>
-    <ol class="stepper" id="stepper">
-      <li class="stepper__item is-current">공모전</li>
-      <li class="stepper__item">연락처</li>
-    </ol>
+    <ol class="stepper" id="stepper"></ol>
   </aside>
 
   <div class="apply__main">
     <form id="flow" novalidate autocomplete="on">
 
       <section class="step" id="step-what">
-        <p class="step__progress">1 / 2</p>
+        <p class="step__progress" id="what-progress">1</p>
         <h2 class="step__q" id="what-heading" tabindex="-1">어떤 공모전인가요?</h2>
         <p class="step__help">공식 공고 주소가 있으면 함께 적어주세요. 같은 공모전을 찾아 확인하는 데 쓰입니다.</p>
 
@@ -66,8 +63,10 @@
         </div>
       </section>
 
+      <div id="steps"></div>
+
       <section class="step" id="step-who" hidden>
-        <p class="step__progress">2 / 2</p>
+        <p class="step__progress" id="who-progress"></p>
         <h2 class="step__q" id="who-heading" tabindex="-1">어디로 회신드리면 될까요?</h2>
         <p class="step__help">검토 후 진행하지 않기로 한 경우에는 아래 메일로 안내드립니다. 제안 확인에만 쓰고 공개하지 않습니다.</p>
 
@@ -124,7 +123,7 @@
     <p>남겨주신 이름과 연락처, 메일은 제안 확인과 회신에만 씁니다. 공개하지 않습니다.</p>
     <details class="foot__privacy">
       <summary>개인정보 수집·이용 안내</summary>
-      <p>수집 항목: 이름, 연락처, 메일, 제안 내용(공모전 이름·주소·이유) · 이용 목적: 제안한 공모전 확인과 회신 ·
+      <p>수집 항목: 이름, 연락처, 메일, 제안 내용(공모전 이름·주소·이유), 지원서와 같은 질문의 답변 · 이용 목적: 제안한 공모전 확인과 회신 ·
       제출 내용은 운영자만 보며 외부에 공개하지 않습니다 · 확인이 끝나면 회신이 필요 없는 분의 정보는 삭제합니다 ·
       삭제를 원하시면 회신받으실 때 말씀해 주세요.</p>
     </details>
@@ -133,8 +132,9 @@
 
 <script src="./js/config.js?v=4"></script>
 <script src="./js/wait.js?v=1"></script>
-<script src="./js/api.js?v=5"></script>
-<script src="./js/suggest.js?v=1"></script>
+<script src="./js/api.js?v=6"></script>
+<script src="./js/qsteps.js?v=1"></script>
+<script src="./js/suggest.js?v=2"></script>
 
 <!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
 <script>

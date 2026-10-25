@@ -188,16 +188,17 @@ GAS 가 A~R 에 **추가만** 한다(수정·삭제 없음). **S 이후는 내 �
   같은 applicant_id 가 위쪽 행에 있던 횟수(재제출 표시), 봇은 `contest_id` 로 DB 에서 마감일·공고 링크를 붙인다.
 
 ### `POST ?t=suggest` (공개판 전용 — 공모전 제안)
-- 본문(JSON): `key=PUBLIC_KEY, suggest_id(UUID), name, contact, email, title, link?, note?, hp(허니팟, 비어 있어야 함)`.
+- 본문(JSON): `key=PUBLIC_KEY, suggest_id(UUID), name, contact, email, title, link?, note?, answers?, hp(허니팟, 비어 있어야 함)`.
+  `answers` 는 `t=apply` 와 같은 `[{qid,text}]`(최대 10) — 지원서와 같은 질문(공통 항목 4 + 시트 [문항] 탭 공통 서술형)을 그대로 쓴다. 낡은 화면은 생략할 수 있어 선택.
   길이 상한은 GAS `handleSuggest_` 가 단일 출처. 제목·이름·연락처·메일 필수, 링크·한마디 선택.
-- 시트 '제안' 탭에 append 전용(`제출시각|suggest_id|이름|연락처|메일|제목|링크|한마디`). 같은 suggest_id·같은 제목은 중복으로 보고 무시.
+- 시트 '제안' 탭에 append 전용(`제출시각|suggest_id|이름|연락처|메일|제목|링크|한마디|문항ID들|답변1..10`). 같은 suggest_id·같은 제목은 중복으로 보고 무시.
 - **서버측 일일 캡**: 전체 `SUGGEST_PER_DAY_ALL`(40) · 같은 메일 `SUGGEST_PER_DAY_PERSON`(3). 넘으면 `{ok:false,error:"한도…"}` — 화면에 그대로 안내한다.
 - 응답에 다른 사람의 데이터는 담지 않는다(쓰기 전용).
 
 ### `GET ?t=suggest_inbox&key=ADMIN_KEY&after=<행번호>`
-- `inbox` 와 같은 형태로 새 제안만 반환: `{"ok":true,"last_row":N,"items":[{"row","at","name","contact","email","title","link","note"}]}`. ADMIN_KEY 전용.
+- `inbox` 와 같은 형태로 새 제안만 반환: `{"ok":true,"last_row":N,"items":[{"row","at","name","contact","email","title","link","note","answers":[{"qid","question","text"}]}]}`. ADMIN_KEY 전용.
 - 공모전봇 `suggest_inbox_job`(5분)이 받는다. 커서·카드 상태는 봇의 `state/suggest_items.json`.
-- **봇은 제안 입력을 '데이터'로만 다룬다** — 검색엔 제목+링크만 넘기고(한마디 제외) 프롬프트 가드를 앞에 붙인다.
+- **봇은 제안 입력을 '데이터'로만 다룬다** — 검색엔 제목+링크만 넘기고(한마디·답변 제외) 프롬프트 가드를 앞에 붙인다.
   킬스위치 사이트 id `recruit_lab_suggest`(꺼져 있으면 받아서 버린다), 자동 검색 하루 10건·주기당 카드 5장.
 
 ## 5. 프론트 구조 — 교체 지점(seam)

@@ -42,6 +42,7 @@
  *  · t=suggest / t=suggest_inbox 추가. 제안 탭은 append 전용이고 사람 열이 없다.
  *  · 공개 쓰기라 서버측 방어가 있다: 허니팟(hp) · 같은 제목/제안ID 는 조용히 무시 · 하루 전체 40건 ·
  *    같은 메일 하루 3건(초과하면 사유를 돌려준다). 상한 수치는 아래 SUGGEST_* 상수.
+ *  · 제안도 지원서와 같은 질문의 답을 받는다: 제안 탭 I~S(문항ID들·답변1..10), setup() 이 헤더를 채운다. 답이 없는 낡은 요청도 받는다.
  */
 
 // ── 탭 이름과 헤더 (SPEC 3장과 문자열까지 일치해야 한다) ──────────────────
@@ -63,8 +64,12 @@ var HEAD_APPLY = ['제출시각', 'applicant_id', 'contest_id', '공모전제목
                   '답변6', '답변7', '답변8', '답변9', '답변10'];
 
 // 제안 탭은 전부 코드가 쓴다(사람 열 없음). 상태·메모는 시트에 적지 않고 봇 쪽에서 관리한다.
-var HEAD_SUGGEST = ['제출시각', 'suggest_id', '이름', '연락처', '메일', '제목', '링크', '한마디'];
-var SUGGEST_COLS = 8;
+// I~S 는 지원서와 같은 질문의 답(문항ID들 + 답변1..10). 낡은 캐시 화면은 답 없이 보내므로 비어 있을 수 있다.
+var HEAD_SUGGEST = ['제출시각', 'suggest_id', '이름', '연락처', '메일', '제목', '링크', '한마디',
+                    '문항ID들', '답변1', '답변2', '답변3', '답변4', '답변5',
+                    '답변6', '답변7', '답변8', '답변9', '답변10'];
+var SUGGEST_COLS = 19;
+var SUGGEST_SCAN_COLS = 8;         // 중복·상한 판정에는 A~H 만 읽는다
 
 var CONTEST_BOT_COLS = 10;   // A~J. 업서트는 여기까지만 쓴다(K·L 보호).
 var APPLY_COLS = 18;         // A~R. append 는 여기까지만 쓴다(S 이후 보호).
@@ -188,7 +193,8 @@ function setup() {
   made.push(ensureTab_(ss, TAB_APPLY, HEAD_APPLY));
   made.push(ensureTab_(ss, TAB_SUGGEST, HEAD_SUGGEST));
 
-  var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY).concat(extendHeader_(tab_(ss, TAB_CONTEST), HEAD_CONTEST));
+  var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY).concat(extendHeader_(tab_(ss, TAB_CONTEST), HEAD_CONTEST))
+    .concat(extendHeader_(tab_(ss, TAB_SUGGEST), HEAD_SUGGEST));
 
   var qsh = tab_(ss, TAB_QUESTION);
   if (qsh.getLastRow() < 2) {
@@ -495,6 +501,17 @@ function handleSuggest_(body) {
   var link = str_(body.link, 'link', MAX_SUGGEST_LINK, false);
   var note = str_(body.note, 'note', MAX_SUGGEST_NOTE, false);
 
+  var answers = body.answers === undefined ? [] : body.answers;
+  if (!Array.isArray(answers)) throw bad_('answers 는 배열이어야 합니다');
+  if (answers.length > MAX_ANSWERS) throw bad_('답변은 최대 ' + MAX_ANSWERS + '개까지입니다');
+  var qids = [];
+  var texts = [];
+  for (var a = 0; a < answers.length; a++) {
+    var ans = answers[a] || {};
+    qids.push(str_(ans.qid, 'answers[' + a + '].qid', MAX_ID, true));
+    texts.push(str_(ans.text, 'answers[' + a + '].text', MAX_ANSWER, false));
+  }
+
   // 메일로 거절 안내를 보낼 수 있어야 하므로 형식이 맞아야 한다. 공백·쉼표·꺾쇠가 있으면 헤더 주입 소지가 있어 막는다.
   if (!/^[^\s@,<>;"']+@[^\s@,<>;"']+\.[^\s@,<>;"']+$/.test(email)) throw bad_('메일 주소 형식이 올바르지 않습니다');
   if (link && !/^https?:\/\/\S+$/i.test(link)) throw bad_('링크는 http:// 또는 https:// 로 시작하는 주소여야 합니다');
@@ -508,7 +525,7 @@ function handleSuggest_(body) {
     var recent = [];
     if (last >= 2) {
       var from = Math.max(2, last - SUGGEST_SCAN_ROWS + 1);
-      recent = sh.getRange(from, 1, last - from + 1, SUGGEST_COLS).getValues();
+      recent = sh.getRange(from, 1, last - from + 1, SUGGEST_SCAN_COLS).getValues();
     }
     var tz = ss.getSpreadsheetTimeZone();
     var today = Utilities.formatDate(new Date(), TZ_KST, 'yyyy-MM-dd');
@@ -526,8 +543,10 @@ function handleSuggest_(body) {
     if (all >= SUGGEST_PER_DAY_ALL) throw bad_('오늘 받을 수 있는 제안이 가득 찼습니다. 내일 다시 보내주세요.');
     if (mine >= SUGGEST_PER_DAY_PERSON) throw bad_('같은 메일로는 하루 ' + SUGGEST_PER_DAY_PERSON + '건까지 보낼 수 있습니다.');
 
-    sh.appendRow([isoKst_(new Date()), sid, cell_(name), cell_(contact), cell_(email),
-                  cell_(title), cell_(link), cell_(note)]);
+    var row = [isoKst_(new Date()), sid, cell_(name), cell_(contact), cell_(email),
+               cell_(title), cell_(link), cell_(note), qids.join(',')];
+    for (var k = 0; k < MAX_ANSWERS; k++) row.push(cell_(texts[k] || ''));
+    sh.appendRow(row);
     SpreadsheetApp.flush();
   });
 
@@ -551,9 +570,19 @@ function handleSuggestInbox_(after) {
   var values = sh.getRange(from + 1, 1, capped, SUGGEST_COLS).getValues();
   var tz = ss.getSpreadsheetTimeZone();
 
+  var qtext = {};
+  var qrows = readTab_(ss, TAB_QUESTION, 3);
+  for (var j = 0; j < qrows.length; j++) qtext[s_(qrows[j][0])] = s_(qrows[j][2]);
+
   var items = [];
   for (var i = 0; i < values.length; i++) {
     var v = values[i];
+    var qids = s_(v[8]) ? s_(v[8]).split(',') : [];
+    var answers = [];
+    for (var k = 0; k < qids.length && k < MAX_ANSWERS; k++) {
+      var qid = qids[k].trim();
+      answers.push({ qid: qid, question: PROFILE_LABELS[qid] || qtext[qid] || qid, text: s_(v[9 + k]) });
+    }
     items.push({
       row: from + 1 + i,
       at: at_(v[0], tz),
@@ -563,7 +592,8 @@ function handleSuggestInbox_(after) {
       email: s_(v[4]),
       title: s_(v[5]),
       link: s_(v[6]),
-      note: s_(v[7])
+      note: s_(v[7]),
+      answers: answers
     });
   }
   // 잘랐으면 '실제로 보낸 마지막 행' 을 돌려줘야 다음 호출이 이어받는다(t=inbox 와 같은 규약).
