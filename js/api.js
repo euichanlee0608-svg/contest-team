@@ -52,6 +52,33 @@
       .finally(function () { clearTimeout(timer); });
   }
 
+  /* ── 실패를 사람이 읽는 말로 ── 화면에는 종류(연결·시간초과·서버·형식)에 맞는 문장만 내보내고,
+     HTTP 코드 같은 속사정은 개발자 콘솔에만 남긴다(규칙 카드 _library/rules/ux-error-tell-user.md).
+     서버가 직접 써 보낸 거절 사유(data.error)는 사람이 쓴 문장이라 그대로 둔다(kind = "rejected"). */
+  var FAIL_TEXT = {
+    offline: "인터넷 연결이 끊긴 것 같습니다.",
+    timeout: "서버 응답이 늦습니다.",
+    server: "서버가 잠시 응답하지 않습니다.",
+    format: "서버 응답을 읽지 못했습니다.",
+  };
+  function fail(kind, detail, text) {
+    if (detail) { try { console.warn("[contest_team]", kind, detail); } catch (e) {} }
+    var e = new Error(text || FAIL_TEXT[kind] || FAIL_TEXT.server);
+    e.kind = kind;
+    return e;
+  }
+  /* fetch 단계에서 난 예외(네트워크 끊김·중단)를 종류로 바꾼다. 이미 종류가 붙은 건 그대로. */
+  function asFail(err) {
+    if (err && err.kind) return err;
+    if (err && err.name === "AbortError") return fail("timeout");
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return fail("offline");
+    return fail("offline", err && err.message);   // fetch 가 던지는 TypeError 는 대개 연결 문제다
+  }
+  function readJSON(res) {
+    if (!res.ok) throw fail("server", "HTTP " + res.status);
+    return res.json().catch(function () { throw fail("format", "JSON 파싱 실패"); });
+  }
+
   function endpoint(t) {
     return CFG.GAS_URL + "?t=" + encodeURIComponent(t) +
            "&key=" + encodeURIComponent(CFG.PUBLIC_KEY);
@@ -97,15 +124,12 @@
   function getJSON(url) {
     return withTimeout(function (signal) {
       return fetch(url, { method: "GET", signal: signal, credentials: "omit", cache: "no-store" });
-    }).then(function (res) {
-      if (!res.ok) throw new Error("서버 응답 " + res.status);
-      return res.json().catch(function () { throw new Error("응답 형식 오류"); });
-    }).then(function (data) {
-      if (!data || data.ok === false) throw new Error((data && data.error) || "목록을 읽지 못했습니다.");
-      return data;
-    }, function (err) {
-      throw (err && err.name === "AbortError") ? new Error("응답 시간 초과") : err;
-    });
+    }).catch(function (err) { throw asFail(err); })
+      .then(readJSON)
+      .then(function (data) {
+        if (!data || data.ok === false) throw fail("rejected", null, (data && data.error) || "목록을 읽지 못했습니다.");
+        return data;
+      });
   }
 
   function remember(data) {
@@ -237,12 +261,11 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: body,
       });
-    }).then(function (res) {
-      if (!res.ok) throw new Error("서버 응답 " + res.status);
-      return res.json();
-    }).then(function (data) {
+    }).catch(function (err) { throw asFail(err); })
+      .then(readJSON)
+      .then(function (data) {
       if (!data || data.ok !== true) {
-        throw new Error((data && data.error) || "제출이 접수되지 않았습니다.");
+        throw fail("rejected", null, (data && data.error) || "제출이 접수되지 않았습니다.");
       }
       return data;
     });
@@ -273,12 +296,11 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: body,
       });
-    }).then(function (res) {
-      if (!res.ok) throw new Error("서버 응답 " + res.status);
-      return res.json();
-    }).then(function (data) {
+    }).catch(function (err) { throw asFail(err); })
+      .then(readJSON)
+      .then(function (data) {
       if (!data || data.ok !== true) {
-        throw new Error((data && data.error) || "제안이 접수되지 않았습니다.");
+        throw fail("rejected", null, (data && data.error) || "제안이 접수되지 않았습니다.");
       }
       return data;
     });

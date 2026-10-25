@@ -294,6 +294,6 @@
     })
     .catch(function (err) {
       stopLoad();
-      setState("불러오지 못했습니다. 잠시 뒤 새로고침해 주세요. (" + err.message + ")", true);
+      setState("불러오지 못했습니다. " + err.message + " 잠시 뒤 새로고침해 주세요.", true);
     });
 })();

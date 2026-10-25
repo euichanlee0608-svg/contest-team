@@ -154,7 +154,7 @@
     loadQuestions().then(function () {
       go(1, true);
     }).catch(function (err) {
-      showErr(whatErr, "질문을 불러오지 못했습니다. 잠시 뒤 다시 눌러주세요. (" + err.message + ")");
+      showErr(whatErr, "질문을 불러오지 못했습니다. " + err.message + " 잠시 뒤 다시 눌러주세요.");
     }).finally(release);
   });
 

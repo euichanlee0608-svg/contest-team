@@ -116,7 +116,7 @@
     }
   }).catch(function (err) {
     listEl.hidden = true;
-    setState("목록을 불러오지 못했습니다. (" + err.message + ") ", true);
+    setState("목록을 불러오지 못했습니다. " + err.message + " ", true);
     var again = el("button", "btn btn--ghost", "다시 불러오기");
     again.type = "button";
     again.style.marginLeft = "0.5rem";
