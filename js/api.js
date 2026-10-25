@@ -248,11 +248,47 @@
     });
   }
 
+  /* 공모전 제안(공개판 전용 화면). 같은 suggest_id 로 다시 보내면 서버가 조용히 한 건으로 합친다 —
+     응답이 늦어 다시 눌러도 중복으로 쌓이지 않는다. 사진은 받지 않는다(제목·링크 글만). */
+  function submitSuggestion(payload) {
+    if (!configured()) {
+      return Promise.reject(new Error("아직 접수 준비가 끝나지 않았습니다."));
+    }
+    var body = JSON.stringify({
+      suggest_id: payload.suggest_id,
+      name: payload.name,
+      contact: payload.contact,
+      email: payload.email,
+      title: payload.title,
+      link: payload.link || "",
+      note: payload.note || "",
+      hp: payload.hp || "",
+    });
+    return withTimeout(function (signal) {
+      return fetch(endpoint("suggest"), {
+        method: "POST",
+        signal: signal,
+        credentials: "omit",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: body,
+      });
+    }).then(function (res) {
+      if (!res.ok) throw new Error("서버 응답 " + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.ok !== true) {
+        throw new Error((data && data.error) || "제안이 접수되지 않았습니다.");
+      }
+      return data;
+    });
+  }
+
   global.ContestTeamAPI = {
     listContests: listContests,
     getContest: getContest,
     getQuestions: getQuestions,
     submitApplication: submitApplication,
+    submitSuggestion: submitSuggestion,
     applicantId: applicantId,
     daysLeft: daysLeft,
     isConfigured: configured,

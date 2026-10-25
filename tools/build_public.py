@@ -3,7 +3,8 @@
 루트(지인용, GitHub Pages 가 그대로 서빙)를 **고치지 않고** 변환해 dist/recruit-lab 에 만든다.
   ① <!-- friends-only:start/end --> 구간 제거 — 포트폴리오 링크 등 오너 신원으로 이어지는 것
   ② <!-- public-slot:operator --> 자리에 public/operator.html(운영자 이력) 삽입
-  ③ 방문 비콘 SITE 를 recruit_lab 으로 — 지인용(contest_team)과 통계를 섞지 않는다
+  ③ 공모전 제안(public/suggest*.html·suggest.js) — 공개판에만 있다. 머리말·첫 화면·목록 아래 세 슬롯 + 제안 화면
+  ④ 방문 비콘 SITE 를 recruit_lab 으로 — 지인용(contest_team)과 통계를 섞지 않는다
 마지막에 신원 흔적(깃허브 아이디·github.io)이 남았으면 **실패**한다 — 마스킹이 조용히 풀리는 걸 막는 게이트.
 
   python3 tools/build_public.py
@@ -18,13 +19,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "dist" / "recruit-lab"
 COPY = ["index.html", "apply.html", "css", "js"]          # 문서·gas·표본 데이터는 공개판에 싣지 않는다
-PAGES = ["index.html", "apply.html"]
+PAGES = ["index.html", "apply.html", "suggest.html"]      # suggest.html 은 public/ 에서 온다(루트에 없다)
 IDENTITY = ["euichanlee0608", "github.io", "github.com"]
 
 
 def transform(html: str, operator: str) -> str:
     html = re.sub(r"[ \t]*<!-- friends-only:start -->.*?<!-- friends-only:end -->\n?", "", html, flags=re.S)
     html = html.replace("<!-- public-slot:operator -->", operator.rstrip("\n"))
+    for slot in ("suggest-nav", "suggest-hero", "suggest-band"):
+        html = html.replace(f"<!-- public-slot:{slot} -->", (ROOT / "public" / f"{slot}.html").read_text(encoding="utf-8").rstrip("\n"))
     return html.replace("'contest_team'", "'recruit_lab'")
 
 
@@ -54,6 +57,9 @@ def main() -> int:
         src = ROOT / name
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, OUT / name)
 
+    shutil.copy2(ROOT / "public" / "suggest.html", OUT / "suggest.html")
+    shutil.copy2(ROOT / "public" / "suggest.js", OUT / "js" / "suggest.js")
+
     operator = (ROOT / "public" / "operator.html").read_text(encoding="utf-8")
     for name in PAGES:
         p = OUT / name
@@ -70,6 +76,8 @@ def main() -> int:
     index = (OUT / "index.html").read_text(encoding="utf-8")
     if 'class="operator"' not in index:
         problems.append("index.html: 운영자 이력 블록이 없음")
+    if index.count('href="./suggest.html"') < 3:
+        problems.append("index.html: 제안하기 진입점(머리말·첫 화면·목록 아래)이 3곳이 아님")
     if "'recruit_lab'" not in index:
         problems.append("index.html: 비콘 SITE 가 recruit_lab 이 아님")
     if problems:

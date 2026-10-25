@@ -6,6 +6,8 @@
  *   POST ?t=apply&key=PUBLIC_KEY                 지원서 쓰기(쓰기 전용, 응답에 남의 데이터 없음)
  *   POST ?t=sync &key=ADMIN_KEY                  공모전 업서트(공모전봇 전용)
  *   GET  ?t=inbox&key=ADMIN_KEY&after=<행번호>   새 지원 전체(텔레그램 알림용 — 신원·질문·답)
+ *   POST ?t=suggest&key=PUBLIC_KEY               공모전 제안 쓰기(공개판 '제안하기' — 쓰기 전용, 응답은 {ok:true} 뿐)
+ *   GET  ?t=suggest_inbox&key=ADMIN_KEY&after=<행번호>   새 제안(공모전봇 전용 — 자동 검색 후 텔레그램 카드)
  *
  * ── 설치 순서 ────────────────────────────────────────────────────────────
  *  1) 새 구글 시트를 하나 만든다. **방문 통계 시트와 절대 겹치지 않게 전용 시트로 만든다**(SPEC 3장).
@@ -35,12 +37,18 @@
  *  · 답변 칸 5 → 10 (I~R). 채점 열은 N 이 아니라 **S 부터**다.
  *  · setup() 이 지원 탭 헤더의 빈 칸을 채우고, 문항 탭이 비어 있으면 기본 질문 3개를 넣는다.
  *  · t=inbox 가 답변까지 돌려준다(ADMIN_KEY 전용 — 공모전봇이 텔레그램으로 보낸다).
+ *
+ * ── 2026-10-25 개정 (코드 붙여넣기 → 배포 관리에서 새 버전 → setup() 한 번 → 탭 '제안' 생김) ──────
+ *  · t=suggest / t=suggest_inbox 추가. 제안 탭은 append 전용이고 사람 열이 없다.
+ *  · 공개 쓰기라 서버측 방어가 있다: 허니팟(hp) · 같은 제목/제안ID 는 조용히 무시 · 하루 전체 40건 ·
+ *    같은 메일 하루 3건(초과하면 사유를 돌려준다). 상한 수치는 아래 SUGGEST_* 상수.
  */
 
 // ── 탭 이름과 헤더 (SPEC 3장과 문자열까지 일치해야 한다) ──────────────────
 var TAB_CONTEST = '공모전';
 var TAB_QUESTION = '문항';
 var TAB_APPLY = '지원';
+var TAB_SUGGEST = '제안';
 
 // A~J 는 봇이 덮어쓰고 K·L 은 사람이 적는다. setup() 은 헤더만 깔고 값은 안 건드린다.
 var HEAD_CONTEST = ['contest_id', '제목', '링크', '마감표기', '마감일', '주최',
@@ -53,6 +61,10 @@ var HEAD_QUESTION = ['qid', 'contest_id', '질문', '도움말', '순서', '최�
 var HEAD_APPLY = ['제출시각', 'applicant_id', 'contest_id', '공모전제목', '이름', '연락처', '소속',
                   '문항ID들', '답변1', '답변2', '답변3', '답변4', '답변5',
                   '답변6', '답변7', '답변8', '답변9', '답변10'];
+
+// 제안 탭은 전부 코드가 쓴다(사람 열 없음). 상태·메모는 시트에 적지 않고 봇 쪽에서 관리한다.
+var HEAD_SUGGEST = ['제출시각', 'suggest_id', '이름', '연락처', '메일', '제목', '링크', '한마디'];
+var SUGGEST_COLS = 8;
 
 var CONTEST_BOT_COLS = 10;   // A~J. 업서트는 여기까지만 쓴다(K·L 보호).
 var APPLY_COLS = 18;         // A~R. append 는 여기까지만 쓴다(S 이후 보호).
@@ -85,6 +97,17 @@ var MAX_ID = 100;                // applicant_id · qid 같은 식별자
 
 var MAX_SYNC_ITEMS = 500;        // 한 번의 sync 로 받는 공모전 수 상한
 var MAX_INBOX_ITEMS = 30;        // 한 번의 inbox 응답 행 수 상한(답변까지 실어 크다 — 초과분은 다음 호출로)
+// 제안(공개 쓰기) 상한 — 폭주 방지(webapps/CLAUDE.md 1번: 비로그인 공개 함수는 서버측 일일 캡)
+var MAX_SUGGEST_NAME = 60;
+var MAX_SUGGEST_CONTACT = 120;
+var MAX_SUGGEST_EMAIL = 120;
+var MAX_SUGGEST_TITLE = 200;
+var MAX_SUGGEST_LINK = 500;
+var MAX_SUGGEST_NOTE = 300;
+var SUGGEST_PER_DAY_ALL = 40;      // 하루 전체
+var SUGGEST_PER_DAY_PERSON = 3;    // 같은 메일 하루
+var SUGGEST_SCAN_ROWS = 200;       // 상한·중복 판정에 훑는 최근 행 수(시트가 커져도 일정한 비용)
+var MAX_SUGGEST_ITEMS = 20;        // 한 번의 suggest_inbox 응답 행 수 상한
 
 var TZ_KST = 'Asia/Seoul';
 var DEFAULT_MAX_CHARS = 2000;    // 문항 F열이 비면 2000 (SPEC 3장)
@@ -131,7 +154,17 @@ function route_(e, method) {
       auth_(p, 'ADMIN_KEY');
       return json_(handleInbox_(p.after));
     }
-    throw bad_('unknown t (feed|apply|sync|inbox)');
+    if (t === 'suggest') {
+      requireMethod_(method, 'POST', t);
+      auth_(p, 'PUBLIC_KEY');
+      return json_(handleSuggest_(readBody_(e)));
+    }
+    if (t === 'suggest_inbox') {
+      requireMethod_(method, 'GET', t);
+      auth_(p, 'ADMIN_KEY');
+      return json_(handleSuggestInbox_(p.after));
+    }
+    throw bad_('unknown t (feed|apply|sync|inbox|suggest|suggest_inbox)');
   } catch (err) {
     // 내가 직접 던진 사유(userSafe)만 밖으로 내보낸다.
     // 예상 못 한 예외는 스택·시트 ID·파일 경로가 섞일 수 있으므로 종류만 알리고 로그에 남긴다.
@@ -153,6 +186,7 @@ function setup() {
   made.push(ensureTab_(ss, TAB_CONTEST, HEAD_CONTEST));
   made.push(ensureTab_(ss, TAB_QUESTION, HEAD_QUESTION));
   made.push(ensureTab_(ss, TAB_APPLY, HEAD_APPLY));
+  made.push(ensureTab_(ss, TAB_SUGGEST, HEAD_SUGGEST));
 
   var warn = extendHeader_(tab_(ss, TAB_APPLY), HEAD_APPLY).concat(extendHeader_(tab_(ss, TAB_CONTEST), HEAD_CONTEST));
 
@@ -442,6 +476,97 @@ function handleInbox_(after) {
 
   // 상한에 걸려 잘랐으면 last_row 를 '실제로 보낸 마지막 행' 으로 돌려준다.
   // 그래야 다음 호출이 이어서 받는다 — 전체 last 를 주면 잘린 만큼이 영영 누락된다.
+  return { ok: true, last_row: from + capped, items: items };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// t=suggest — 제안 탭에 append 만. 공개 쓰기라 방어가 두껍다.
+// ─────────────────────────────────────────────────────────────────────────
+
+function handleSuggest_(body) {
+  // 허니팟: 사람 눈에 안 보이는 칸이 차 있으면 봇이다. 봇에게 거절 사유를 알려주지 않고 성공처럼 답한다.
+  if (s_(body.hp)) return { ok: true };
+
+  var sid = str_(body.suggest_id, 'suggest_id', MAX_ID, true);
+  var name = str_(body.name, 'name', MAX_SUGGEST_NAME, true);
+  var contact = str_(body.contact, 'contact', MAX_SUGGEST_CONTACT, true);
+  var email = str_(body.email, 'email', MAX_SUGGEST_EMAIL, true).toLowerCase();
+  var title = str_(body.title, 'title', MAX_SUGGEST_TITLE, true);
+  var link = str_(body.link, 'link', MAX_SUGGEST_LINK, false);
+  var note = str_(body.note, 'note', MAX_SUGGEST_NOTE, false);
+
+  // 메일로 거절 안내를 보낼 수 있어야 하므로 형식이 맞아야 한다. 공백·쉼표·꺾쇠가 있으면 헤더 주입 소지가 있어 막는다.
+  if (!/^[^\s@,<>;"']+@[^\s@,<>;"']+\.[^\s@,<>;"']+$/.test(email)) throw bad_('메일 주소 형식이 올바르지 않습니다');
+  if (link && !/^https?:\/\/\S+$/i.test(link)) throw bad_('링크는 http:// 또는 https:// 로 시작하는 주소여야 합니다');
+
+  var normTitle = title.toLowerCase().replace(/\s+/g, '');
+  var ss = ss_();
+
+  withLock_(function () {
+    var sh = tab_(ss, TAB_SUGGEST);
+    var last = sh.getLastRow();
+    var recent = [];
+    if (last >= 2) {
+      var from = Math.max(2, last - SUGGEST_SCAN_ROWS + 1);
+      recent = sh.getRange(from, 1, last - from + 1, SUGGEST_COLS).getValues();
+    }
+    var tz = ss.getSpreadsheetTimeZone();
+    var today = Utilities.formatDate(new Date(), TZ_KST, 'yyyy-MM-dd');
+    var all = 0, mine = 0;
+    for (var i = 0; i < recent.length; i++) {
+      var r = recent[i];
+      // 같은 제안ID(재전송)나 같은 제목은 새로 쌓지 않는다. 제안자에게는 접수된 것으로 답한다.
+      if (s_(r[1]) === sid) return;
+      if (s_(r[5]).toLowerCase().replace(/\s+/g, '') === normTitle) return;
+      if (at_(r[0], tz).slice(0, 10) === today) {
+        all++;
+        if (s_(r[4]).toLowerCase() === email) mine++;
+      }
+    }
+    if (all >= SUGGEST_PER_DAY_ALL) throw bad_('오늘 받을 수 있는 제안이 가득 찼습니다. 내일 다시 보내주세요.');
+    if (mine >= SUGGEST_PER_DAY_PERSON) throw bad_('같은 메일로는 하루 ' + SUGGEST_PER_DAY_PERSON + '건까지 보낼 수 있습니다.');
+
+    sh.appendRow([isoKst_(new Date()), sid, cell_(name), cell_(contact), cell_(email),
+                  cell_(title), cell_(link), cell_(note)]);
+    SpreadsheetApp.flush();
+  });
+
+  return { ok: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// t=suggest_inbox — ADMIN_KEY 전용. 공모전봇이 새 제안을 받아 자동 검색 후 텔레그램으로 보낸다.
+// ─────────────────────────────────────────────────────────────────────────
+
+function handleSuggestInbox_(after) {
+  var from = Number(after);
+  if (!(from > 1)) from = 1;                 // 1행은 헤더
+
+  var ss = ss_();
+  var sh = tab_(ss, TAB_SUGGEST);
+  var last = sh.getLastRow();
+  if (last <= from) return { ok: true, last_row: Math.max(last, 1), items: [] };
+
+  var capped = Math.min(last - from, MAX_SUGGEST_ITEMS);
+  var values = sh.getRange(from + 1, 1, capped, SUGGEST_COLS).getValues();
+  var tz = ss.getSpreadsheetTimeZone();
+
+  var items = [];
+  for (var i = 0; i < values.length; i++) {
+    var v = values[i];
+    items.push({
+      row: from + 1 + i,
+      at: at_(v[0], tz),
+      suggest_id: s_(v[1]),
+      name: s_(v[2]),
+      contact: s_(v[3]),
+      email: s_(v[4]),
+      title: s_(v[5]),
+      link: s_(v[6]),
+      note: s_(v[7])
+    });
+  }
+  // 잘랐으면 '실제로 보낸 마지막 행' 을 돌려줘야 다음 호출이 이어받는다(t=inbox 와 같은 규약).
   return { ok: true, last_row: from + capped, items: items };
 }
 

@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 
 for f in js/*.js; do node --check "$f"; done            # node --check 는 첫 파일만 보므로 하나씩
 python3 tools/build_public.py                            # 마스킹·이력 삽입 + 신원 흔적 게이트
-node ~/webstats/check_beacon.js dist/recruit-lab/index.html dist/recruit-lab/apply.html
+node ~/webstats/check_beacon.js dist/recruit-lab/index.html dist/recruit-lab/apply.html dist/recruit-lab/suggest.html
 
 # --force 는 프로젝트를 새로 만들 때만: wrangler 4.13x 는 새 pages 프로젝트를 Workers 로 넘기려다 실패한다
 # (2026-09-15 실측). Workers 주소(*.<계정서브도메인>.workers.dev)는 계정 이름이 드러날 수 있어 기존 Pages 로 강제했고,

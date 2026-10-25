@@ -138,6 +138,10 @@ a { color: inherit; }
 .nav__brand { font-family: var(--f-serif); font-weight: 700; font-size: 1.0625rem; text-decoration: none; }
 .nav__link { font-size: 0.875rem; color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
 .nav__link:hover { color: var(--ink); }
+.nav__links { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
+/* 제안하기 — 공개판 머리말에서 한눈에 보이는 단추. 채운 잉크색 사각형, 다른 장식 없음 */
+.nav__cta { background: var(--ink); color: var(--paper); padding: 0.55em 1em; border-radius: 3px; font-weight: 500; white-space: nowrap; }
+.nav__cta:hover { color: var(--paper); opacity: 0.86; }
 
 /* ── 첫 화면 ── */
 .hero {
@@ -181,7 +185,7 @@ a { color: inherit; }
 .principle__title { font-size: 1.125rem; font-weight: 700; margin: 0 0 0.5rem; }
 .principle__text { margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.8; }
 
-.hero__cta { margin-top: clamp(2.25rem, 5vh, 3.5rem); }
+.hero__cta { margin-top: clamp(2.25rem, 5vh, 3.5rem); display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
 /* 첫 화면 입장: 제목은 줄마다 아래에서 올라오고, 나머지는 옅게 떠오른다 */
 .js [data-anim] {
@@ -645,3 +649,12 @@ a { color: inherit; }
 .foot__privacy p { margin: 0.5rem 0 0; max-width: 46rem; line-height: 1.7; }
 .operator__list li { grid-template-columns: 5.25rem minmax(0, 1fr); }
 @media (max-width: 640px) { .operator__list li { grid-template-columns: 1fr; } }
+
+/* ── 공모전 제안 (공개판 전용 조각이 쓰는 스타일) ── */
+.suggest { border-top: 1px solid var(--ink); padding-top: clamp(3.5rem, 8vw, 6rem); padding-bottom: clamp(3.5rem, 8vw, 6rem); }
+.suggest__inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 28rem); gap: 1.75rem clamp(2rem, 6vw, 5rem); align-items: end; }
+.suggest__title { font-family: var(--f-serif); font-weight: 400; font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.35; letter-spacing: -0.015em; margin: 0; word-break: keep-all; }
+.suggest__text { margin: 0 0 1.5rem; color: var(--ink-soft); font-size: 0.9375rem; word-break: keep-all; }
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+@media (max-width: 860px) { .suggest__inner { grid-template-columns: minmax(0, 1fr); align-items: start; } }
+@media (max-width: 480px) { .nav__links { gap: 0.9rem; } .nav__links .nav__link:not(.nav__cta) { display: none; } }

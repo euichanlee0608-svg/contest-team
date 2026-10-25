@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공모전 제안 — 같이 할 사람</title>
+<meta name="description" content="목록에 없는 공모전을 제안합니다. 제목이나 공고 주소를 남기면 확인합니다.">
+<meta name="robots" content="noindex">
+<script>document.documentElement.className += " js";</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./css/styles.css?v=8">
+</head>
+<body>
+
+<header class="nav nav--solid">
+  <div class="wrap nav__inner">
+    <a class="nav__brand" href="./index.html">같이 할 사람</a>
+    <a class="nav__link" href="./index.html#contests">← 목록으로</a>
+  </div>
+</header>
+
+<main class="wrap apply">
+  <aside class="apply__side" id="ctx">
+    <p class="ctx__kicker">공모전 제안</p>
+    <h1 class="ctx__title">목록에 없는 공모전을 알려주세요.</h1>
+    <p class="ctx__note">제목이나 공고 주소만 있어도 됩니다. 확인해서 함께할 만하면 다음 모집에 검토합니다.</p>
+    <div class="progress" aria-hidden="true"><div class="progress__bar" id="progress-bar"></div></div>
+    <ol class="stepper" id="stepper">
+      <li class="stepper__item is-current">공모전</li>
+      <li class="stepper__item">연락처</li>
+    </ol>
+  </aside>
+
+  <div class="apply__main">
+    <form id="flow" novalidate autocomplete="on">
+
+      <section class="step" id="step-what">
+        <p class="step__progress">1 / 2</p>
+        <h2 class="step__q" id="what-heading" tabindex="-1">어떤 공모전인가요?</h2>
+        <p class="step__help">공식 공고 주소가 있으면 함께 적어주세요. 같은 공모전을 찾아 확인하는 데 쓰입니다.</p>
+
+        <div class="field">
+          <label class="field__label" for="f-title">공모전 이름</label>
+          <input class="field__input" id="f-title" name="title" type="text" maxlength="200" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-link">공고 주소
+            <span class="field__hint">선택 사항 · https:// 로 시작하는 주소</span>
+          </label>
+          <input class="field__input" id="f-link" name="link" type="url" inputmode="url" maxlength="500"
+                 autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-note">제안하는 이유
+            <span class="field__hint">선택 사항 · 한 줄이면 충분합니다</span>
+          </label>
+          <input class="field__input" id="f-note" name="note" type="text" maxlength="300" autocomplete="off">
+        </div>
+
+        <p class="notice notice--bad" id="what-error" hidden></p>
+
+        <div class="step__nav">
+          <button class="btn" type="button" id="what-next">다음</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-who" hidden>
+        <p class="step__progress">2 / 2</p>
+        <h2 class="step__q" id="who-heading" tabindex="-1">어디로 회신드리면 될까요?</h2>
+        <p class="step__help">검토 후 진행하지 않기로 한 경우에는 아래 메일로 안내드립니다. 제안 확인에만 쓰고 공개하지 않습니다.</p>
+
+        <div class="field">
+          <label class="field__label" for="f-name">이름</label>
+          <input class="field__input" id="f-name" name="name" type="text" maxlength="60"
+                 autocomplete="name" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-contact">연락처
+            <span class="field__hint">카카오톡 아이디나 전화번호 중 편한 것</span>
+          </label>
+          <input class="field__input" id="f-contact" name="contact" type="text" maxlength="120"
+                 autocomplete="tel" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="f-email">메일</label>
+          <input class="field__input" id="f-email" name="email" type="email" inputmode="email" maxlength="120"
+                 autocomplete="email" autocapitalize="off" required>
+        </div>
+
+        <div class="trap" aria-hidden="true">
+          <label for="f-website">website</label>
+          <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <p class="notice notice--bad" id="submit-error" hidden></p>
+
+        <div class="step__nav">
+          <button class="btn btn--ghost" type="button" id="who-prev">이전</button>
+          <button class="btn" type="submit" id="submit">제안 보내기</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-done" hidden>
+        <h2 class="step__q" id="done-heading" tabindex="-1">제안을 받았습니다.</h2>
+        <p class="step__help">
+          확인한 뒤 진행하지 않기로 한 경우에는 남겨주신 메일로 안내드립니다.
+          이 창은 닫으셔도 됩니다.
+        </p>
+        <div class="step__nav">
+          <a class="btn btn--ghost" href="./index.html#contests">모집 중인 프로젝트 보기</a>
+        </div>
+      </section>
+
+    </form>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <p>남겨주신 이름과 연락처, 메일은 제안 확인과 회신에만 씁니다. 공개하지 않습니다.</p>
+    <details class="foot__privacy">
+      <summary>개인정보 수집·이용 안내</summary>
+      <p>수집 항목: 이름, 연락처, 메일, 제안 내용(공모전 이름·주소·이유) · 이용 목적: 제안한 공모전 확인과 회신 ·
+      제출 내용은 운영자만 보며 외부에 공개하지 않습니다 · 확인이 끝나면 회신이 필요 없는 분의 정보는 삭제합니다 ·
+      삭제를 원하시면 회신받으실 때 말씀해 주세요.</p>
+    </details>
+  </div>
+</footer>
+
+<script src="./js/config.js?v=4"></script>
+<script src="./js/wait.js?v=1"></script>
+<script src="./js/api.js?v=5"></script>
+<script src="./js/suggest.js?v=1"></script>
+
+<!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
+<script>
+(function(){
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6J7xGChz7atOL6sVnbiWui8Z1lXVjeF8WUGTj3MXNgEn7EioTz8xZXb522vkAxkgeXA/exec';
+  var SITE = 'contest_team';
+  try {
+    if (location.search.indexOf('owner=1') !== -1) {
+      localStorage.setItem('__is_owner__', '1');            /* 내 방문은 이후 영구 제외 */
+    } else if (localStorage.getItem('__is_owner__') !== '1'
+               && location.protocol !== 'file:'             /* 로컬 헤드리스 테스트 차단 */
+               && location.hostname !== 'localhost'
+               && location.hostname !== '127.0.0.1') {
+      var img = new Image();
+      img.src = WEBAPP_URL
+        + '?t=pv&s=' + encodeURIComponent(SITE)
+        + '&p=' + encodeURIComponent(location.pathname + location.hash)
+        + '&r=' + encodeURIComponent(document.referrer || 'direct')
+        + '&v=' + encodeURIComponent(vid());
+    }
+  } catch (e) {}
+
+  function vid(){
+    try {
+      var k = '__vid__', v = localStorage.getItem(k);
+      if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return ''; }
+  }
+})();
+</script>
+
+</body>
+</html>
