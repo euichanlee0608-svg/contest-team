@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>공모전 제안 — 같이 할 사람</title>
-<meta name="description" content="목록에 없는 공모전을 제안합니다. 제목이나 공고 주소를 남기면 확인합니다.">
+<title>프로젝트 제안 — 같이 할 사람</title>
+<meta name="description" content="목록에 없는 공모전이나 프로젝트를 제안합니다. 이름이나 공고 주소, 짧은 설명을 남기면 확인합니다.">
 <meta name="robots" content="noindex">
 <script>document.documentElement.className += " js";</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -21,9 +21,9 @@
 
 <main class="wrap apply">
   <aside class="apply__side" id="ctx">
-    <p class="ctx__kicker">공모전 제안</p>
-    <h1 class="ctx__title">목록에 없는 공모전을 알려주세요.</h1>
-    <p class="ctx__note">제목이나 공고 주소만 있어도 됩니다. 확인해 본 뒤, 다음 모집에서 함께할 수 있을지 살펴보겠습니다. 이어지는 질문은 모집 지원서와 같습니다.</p>
+    <p class="ctx__kicker">프로젝트 제안</p>
+    <h1 class="ctx__title">목록에 없는 공모전이나 프로젝트를 알려주세요.</h1>
+    <p class="ctx__note">공모전이면 제목이나 공고 주소를, 직접 구상한 프로젝트라면 무엇을 만들고 싶은지를 적어주세요. 확인해 본 뒤, 다음 모집에서 함께할 수 있을지 살펴보겠습니다. 이어지는 질문은 모집 지원서와 같습니다.</p>
     <div class="progress" aria-hidden="true"><div class="progress__bar" id="progress-bar"></div></div>
     <ol class="stepper" id="stepper"></ol>
   </aside>
@@ -33,25 +33,25 @@
 
       <section class="step" id="step-what">
         <p class="step__progress" id="what-progress">1</p>
-        <h2 class="step__q" id="what-heading" tabindex="-1">어떤 공모전인가요?</h2>
-        <p class="step__help">공식 공고 주소가 있으면 함께 적어주세요. 같은 공모전을 찾아 확인하는 데 쓰입니다.</p>
+        <h2 class="step__q" id="what-heading" tabindex="-1">어떤 공모전이나 프로젝트인가요?</h2>
+        <p class="step__help">공모전이라면 공식 공고 주소를 함께 적어주세요. 공고가 없는 프로젝트라면 주소는 비워 두고, 아래 칸에 무엇을 만들고 싶은지 적어주세요.</p>
 
         <div class="field">
-          <label class="field__label" for="f-title">공모전 이름</label>
+          <label class="field__label" for="f-title">공모전·프로젝트 이름</label>
           <input class="field__input" id="f-title" name="title" type="text" maxlength="200" required>
         </div>
 
         <div class="field">
           <label class="field__label" for="f-link">공고 주소
-            <span class="field__hint">선택 사항 · https:// 로 시작하는 주소</span>
+            <span class="field__hint">선택 사항 · 공모전이면 https:// 로 시작하는 공고 주소</span>
           </label>
           <input class="field__input" id="f-link" name="link" type="url" inputmode="url" maxlength="500"
                  autocomplete="off" autocapitalize="off" spellcheck="false">
         </div>
 
         <div class="field">
-          <label class="field__label" for="f-note">제안하는 이유
-            <span class="field__hint">선택 사항 · 한 줄이면 충분합니다</span>
+          <label class="field__label" for="f-note">제안 이유·설명
+            <span class="field__hint">선택 사항 · 프로젝트라면 무엇을 만들지 한두 줄로</span>
           </label>
           <input class="field__input" id="f-note" name="note" type="text" maxlength="300" autocomplete="off">
         </div>
@@ -123,7 +123,7 @@
     <p>남겨주신 이름과 연락처, 메일은 제안 확인과 회신에만 씁니다. 공개하지 않습니다.</p>
     <details class="foot__privacy">
       <summary>개인정보 수집·이용 안내</summary>
-      <p>수집 항목: 이름, 연락처, 메일, 제안 내용(공모전 이름·주소·이유), 지원서와 같은 질문의 답변 · 이용 목적: 제안한 공모전 확인과 회신 ·
+      <p>수집 항목: 이름, 연락처, 메일, 제안 내용(공모전·프로젝트 이름·주소·설명), 지원서와 같은 질문의 답변 · 이용 목적: 제안 내용 확인과 회신 ·
       제출 내용은 운영자만 보며 외부에 공개하지 않습니다 · 확인이 끝나면 회신이 필요 없는 분의 정보는 삭제합니다 ·
       삭제를 원하시면 회신받으실 때 말씀해 주세요.</p>
     </details>
@@ -134,7 +134,7 @@
 <script src="./js/wait.js?v=1"></script>
 <script src="./js/api.js?v=7"></script>
 <script src="./js/qsteps.js?v=1"></script>
-<script src="./js/suggest.js?v=3"></script>
+<script src="./js/suggest.js?v=4"></script>
 
 <!-- 방문 수집 비콘 — 단일 출처: ~/webstats/beacon.template.js (SITE 한 줄만 고친다) -->
 <script>

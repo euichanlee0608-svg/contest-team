@@ -63,7 +63,7 @@
 
   function buildStepper() {
     stepperEl.textContent = "";
-    ["공모전"].concat(steps.map(function (st) { return st.short; }), ["연락처"]).forEach(function (label) {
+    ["제안"].concat(steps.map(function (st) { return st.short; }), ["연락처"]).forEach(function (label) {
       var li = document.createElement("li");
       li.className = "stepper__item";
       li.textContent = label;
@@ -108,7 +108,7 @@
       var first = steps[0].node.querySelector(".step__q");
       var intro = document.createElement("p");
       intro.className = "step__help";
-      intro.textContent = "제안하신 공모전을 함께 한다고 생각하고 답해주세요. 아래 질문은 모집 지원서와 같습니다.";
+      intro.textContent = "제안하신 공모전이나 프로젝트를 함께 한다고 생각하고 답해주세요. 아래 질문은 모집 지원서와 같습니다.";
       first.insertAdjacentElement("afterend", intro);
       buildStepper();
     }).catch(function (err) {
@@ -136,7 +136,7 @@
   $("what-next").addEventListener("click", function () {
     whatErr.hidden = true;
     if (!$("f-title").value.trim()) {
-      showErr(whatErr, "공모전 이름을 적어주세요.");
+      showErr(whatErr, "공모전이나 프로젝트 이름을 적어주세요.");
       $("f-title").focus();
       return;
     }
